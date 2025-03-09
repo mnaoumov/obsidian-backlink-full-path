@@ -1,6 +1,16 @@
 # Backlink Full Path
 
-This is a plugin for [Obsidian](https://obsidian.md/) that Shows the backlink&#39;s full path in the backlinks panel.
+This is a plugin for [Obsidian](https://obsidian.md/) that shows the backlink's full path in the backlinks panel.
+
+By default, Obsidian just shows the note name
+
+![](./images/just-name.png)
+
+Which might be confusing when you have notes with the same name in different folders.
+
+This plugin shows the full name helping to identify the backlinks better
+
+![](./images/full-path.png)
 
 ## Installation
 
