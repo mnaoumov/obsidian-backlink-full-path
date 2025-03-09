@@ -11,6 +11,7 @@ import type {
 } from 'obsidian-typings';
 
 import { around } from 'monkey-around';
+import { MarkdownView } from 'obsidian';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/Async';
 import { getPrototypeOf } from 'obsidian-dev-utils/Object';
 import { EmptySettings } from 'obsidian-dev-utils/obsidian/Plugin/EmptySettings';
@@ -31,7 +32,7 @@ export class BacklinkFullPathPlugin extends PluginBase {
     return null;
   }
 
-  protected override onLayoutReady(): void {
+  protected override async onLayoutReady(): Promise<void> {
     const backlinksCorePlugin = this.app.internalPlugins.getPluginById(InternalPluginName.Backlink);
     if (!backlinksCorePlugin) {
       return;
@@ -48,8 +49,15 @@ export class BacklinkFullPathPlugin extends PluginBase {
     }));
 
     if (backlinksCorePlugin.enabled) {
-      plugin.onBacklinksCorePluginEnable();
+      await this.patchBacklinksPane();
+      await this.refreshBacklinkPanels();
     }
+
+    this.register(() => {
+      invokeAsyncSafely(async () => {
+        await this.refreshBacklinkPanels();
+      });
+    });
   }
 
   private addResult(next: AddResultFn, treeDom: TreeDom, file: TFile, result: ResultDomResult, content: string, shouldShowTitle?: boolean): ResultDom {
@@ -93,5 +101,31 @@ export class BacklinkFullPathPlugin extends PluginBase {
           return plugin.addResult(next, this, file, result, content, shouldShowTitle);
         }
     }));
+  }
+
+  private async refreshBacklinkPanels(): Promise<void> {
+    await this.reloadBacklinksView();
+
+    for (const leaf of this.app.workspace.getLeavesOfType(ViewType.Markdown)) {
+      if (!(leaf.view instanceof MarkdownView)) {
+        continue;
+      }
+
+      if (!leaf.view.backlinks) {
+        continue;
+      }
+
+      leaf.view.backlinks.recomputeBacklink(leaf.view.backlinks.file);
+    }
+  }
+
+  private async reloadBacklinksView(): Promise<void> {
+    const backlinkView = await this.getBacklinkView();
+    if (!backlinkView) {
+      return;
+    }
+    if (backlinkView.file) {
+      backlinkView.backlink.recomputeBacklink(backlinkView.file);
+    }
   }
 }
