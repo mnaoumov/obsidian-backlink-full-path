@@ -1,0 +1,10 @@
+{
+  "author": "mnaoumov",
+  "authorUrl": "https://github.com/mnaoumov/",
+  "description": "Shows the backlink&#39;s full path in the backlinks panel.",
+  "fundingUrl": "https://www.buymeacoffee.com/mnaoumov",
+  "id": "backlink-full-path",
+  "isDesktopOnly": false,
+  "name": "Backlink Full Path",
+  "version": "0.0.0"
+}

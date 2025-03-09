@@ -1,0 +1,38 @@
+{
+  "name": "backlink-full-path",
+  "version": "0.0.0",
+  "description": "Shows the backlink&#39;s full path in the backlinks panel.",
+  "keywords": [],
+  "license": "MIT",
+  "author": "mnaoumov",
+  "type": "module",
+  "scripts": {
+    "build": "obsidian-dev-utils build",
+    "build:clean": "obsidian-dev-utils build:clean",
+    "build:compile": "obsidian-dev-utils build:compile",
+    "build:compile:svelte": "obsidian-dev-utils build:compile:svelte",
+    "build:compile:typescript": "obsidian-dev-utils build:compile:typescript",
+    "dev": "obsidian-dev-utils dev",
+    "format": "obsidian-dev-utils format",
+    "format:check": "obsidian-dev-utils format:check",
+    "lint": "obsidian-dev-utils lint",
+    "lint:fix": "obsidian-dev-utils lint:fix",
+    "spellcheck": "obsidian-dev-utils spellcheck",
+    "version": "obsidian-dev-utils version"
+  },
+  "devDependencies": {
+    "@codemirror/language": "^6.10.8",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.36.4",
+    "@tsconfig/strictest": "^2.0.5",
+    "@types/node": "^22.13.10",
+    "moment": "^2.30.1",
+    "obsidian": "^1.8.7",
+    "obsidian-dev-utils": "^19.8.2",
+    "obsidian-typings": "^2.35.0",
+    "svelte": "^5.22.6"
+  },
+  "overrides": {
+    "boolean": "npm:dry-uninstall"
+  }
+}
