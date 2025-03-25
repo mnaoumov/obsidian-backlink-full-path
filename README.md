@@ -14,8 +14,20 @@ This plugin shows the full name helping to identify the backlinks better
 
 ## Installation
 
-- The plugin is not available in [the official Community Plugins repository](https://obsidian.md/plugins) yet.
-- [Beta releases](obsidian://brat?plugin=https://github.com/mnaoumov/obsidian-backlink-full-path) can be installed via [BRAT](https://obsidian.md/plugins?id=obsidian42-brat).
+The plugin is available in [the official Community Plugins repository](https://obsidian.md/plugins?id=backlink-full-path).
+
+### Beta versions
+
+To install the latest beta release of this plugin (regardless if it is available in [the official Community Plugins repository](https://obsidian.md/plugins) or not), follow these steps:
+
+1. Make sure to have the [BRAT plugin](https://obsidian.md/plugins?id=obsidian42-brat) installed and enabled.
+2. Paste the following link in your browser and press `Enter`:
+
+   ```
+   obsidian://brat?plugin=https://github.com/mnaoumov/obsidian-backlink-full-path
+   ```
+
+3. An Obsidian pop-up window should appear. In the window, click the `Add plugin` button once and wait a few seconds for the plugin to install.
 
 ## Debugging
 
