@@ -10,10 +10,7 @@ import type {
   TreeDom
 } from 'obsidian-typings';
 
-import {
-  MarkdownView,
-  normalizePath
-} from 'obsidian';
+import { MarkdownView } from 'obsidian';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/Async';
 import { getPrototypeOf } from 'obsidian-dev-utils/Object';
 import { registerPatch } from 'obsidian-dev-utils/obsidian/MonkeyAround';
@@ -74,7 +71,16 @@ export class BacklinkFullPathPlugin extends PluginBase<BacklinkFullPathPluginSet
   private addResult(next: AddResultFn, treeDom: TreeDom, file: TFile, result: ResultDomResult, content: string, shouldShowTitle?: boolean): ResultDom {
     const basename = file.basename;
     const name = file.name;
-    const title = this.settings.shouldIncludeExtension ? normalizePath(join(file.parent?.path ?? '', file.basename)) : file.path;
+    const pathParts = file.path.split('/');
+    if (!this.settings.shouldIncludeExtension) {
+      pathParts[pathParts.length - 1] = file.basename;
+    }
+
+    if (this.settings.pathDepth > 0) {
+      pathParts.splice(0, Math.max(0, pathParts.length - this.settings.pathDepth));
+    }
+
+    const title = join(...pathParts);
     try {
       file.basename = title;
       file.name = title;
