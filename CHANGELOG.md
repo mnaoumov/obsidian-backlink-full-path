@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.1.0
+
+- Add setting: Path depth
+- Add setting: Should include extension
+- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/20.2.1
+
 ## 1.0.1
 
 - Remove escaping
