@@ -11,25 +11,36 @@ import type {
 } from 'obsidian-typings';
 
 import { around } from 'monkey-around';
-import { MarkdownView } from 'obsidian';
+import {
+  MarkdownView,
+  normalizePath
+} from 'obsidian';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/Async';
 import { getPrototypeOf } from 'obsidian-dev-utils/Object';
-import { EmptySettings } from 'obsidian-dev-utils/obsidian/Plugin/EmptySettings';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
+import { join } from 'obsidian-dev-utils/Path';
 import {
   InternalPluginName,
   ViewType
 } from 'obsidian-typings/implementations';
 
+import { BacklinkFullPathPluginSettings } from './BacklinkFullPathPluginSettings.ts';
+import { BacklinkFullPathPluginSettingsTab } from './BacklinkFullPathPluginSettingsTab.ts';
+
 type AddResultFn = (file: TFile, result: ResultDomResult, content: string, shouldShowTitle?: boolean) => ResultDom;
 
-export class BacklinkFullPathPlugin extends PluginBase {
-  protected override createPluginSettings(): EmptySettings {
-    return new EmptySettings();
+export class BacklinkFullPathPlugin extends PluginBase<BacklinkFullPathPluginSettings> {
+  public override async saveSettings(newSettings: BacklinkFullPathPluginSettings): Promise<void> {
+    await super.saveSettings(newSettings);
+    await this.refreshBacklinkPanels();
+  }
+
+  protected override createPluginSettings(data: unknown): BacklinkFullPathPluginSettings {
+    return new BacklinkFullPathPluginSettings(data);
   }
 
   protected override createPluginSettingsTab(): null | PluginSettingTab {
-    return null;
+    return new BacklinkFullPathPluginSettingsTab(this);
   }
 
   protected override async onLayoutReady(): Promise<void> {
@@ -63,9 +74,10 @@ export class BacklinkFullPathPlugin extends PluginBase {
   private addResult(next: AddResultFn, treeDom: TreeDom, file: TFile, result: ResultDomResult, content: string, shouldShowTitle?: boolean): ResultDom {
     const basename = file.basename;
     const name = file.name;
+    const title = this.settings.shouldIncludeExtension ? normalizePath(join(file.parent?.path ?? '', file.basename)) : file.path;
     try {
-      file.basename = file.path;
-      file.name = file.path;
+      file.basename = title;
+      file.name = title;
       return next.call(treeDom, file, result, content, shouldShowTitle);
     } finally {
       file.basename = basename;
