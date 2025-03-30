@@ -10,13 +10,13 @@ import type {
   TreeDom
 } from 'obsidian-typings';
 
-import { around } from 'monkey-around';
 import {
   MarkdownView,
   normalizePath
 } from 'obsidian';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/Async';
 import { getPrototypeOf } from 'obsidian-dev-utils/Object';
+import { registerPatch } from 'obsidian-dev-utils/obsidian/MonkeyAround';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
 import { join } from 'obsidian-dev-utils/Path';
 import {
@@ -51,13 +51,13 @@ export class BacklinkFullPathPlugin extends PluginBase<BacklinkFullPathPluginSet
 
     // eslint-disable-next-line consistent-this,@typescript-eslint/no-this-alias
     const plugin = this;
-    this.register(around(getPrototypeOf(backlinksCorePlugin.instance), {
+    registerPatch(this, getPrototypeOf(backlinksCorePlugin.instance), {
       onUserEnable: (next: () => void) =>
         function onUserEnablePatched(this: BacklinkPlugin): void {
           next.call(this);
           plugin.onBacklinksCorePluginEnable();
         }
-    }));
+    });
 
     if (backlinksCorePlugin.enabled) {
       await this.patchBacklinksPane();
@@ -107,12 +107,12 @@ export class BacklinkFullPathPlugin extends PluginBase<BacklinkFullPathPluginSet
 
     // eslint-disable-next-line consistent-this,@typescript-eslint/no-this-alias
     const plugin = this;
-    this.register(around(getPrototypeOf(backlinkView.backlink.backlinkDom), {
+    registerPatch(this, getPrototypeOf(backlinkView.backlink.backlinkDom), {
       addResult: (next: AddResultFn): AddResultFn =>
         function addResultPatched(this: TreeDom, file, result, content, shouldShowTitle?) {
           return plugin.addResult(next, this, file, result, content, shouldShowTitle);
         }
-    }));
+    });
   }
 
   private async refreshBacklinkPanels(): Promise<void> {
