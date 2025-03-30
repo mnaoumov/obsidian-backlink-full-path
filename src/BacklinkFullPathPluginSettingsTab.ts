@@ -10,7 +10,7 @@ export class BacklinkFullPathPluginSettingsTab extends PluginSettingsTabBase<Bac
     this.containerEl.empty();
 
     new Setting(this.containerEl)
-      .setName('Include Extension')
+      .setName('Include extension')
       .setDesc('Whether to include file extension in backlinks.')
       .addToggle((toggle) => {
         this.bind(toggle, 'shouldIncludeExtension');
