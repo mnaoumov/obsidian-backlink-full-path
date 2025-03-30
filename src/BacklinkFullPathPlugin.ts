@@ -27,7 +27,7 @@ import {
 import { BacklinkFullPathPluginSettings } from './BacklinkFullPathPluginSettings.ts';
 import { BacklinkFullPathPluginSettingsTab } from './BacklinkFullPathPluginSettingsTab.ts';
 
-type AddResultFn = (file: TFile, result: ResultDomResult, content: string, shouldShowTitle?: boolean) => ResultDom;
+type AddResultFn = TreeDom['addResult'];
 
 export class BacklinkFullPathPlugin extends PluginBase<BacklinkFullPathPluginSettings> {
   public override async saveSettings(newSettings: BacklinkFullPathPluginSettings): Promise<void> {
