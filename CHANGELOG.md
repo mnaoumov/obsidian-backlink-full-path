@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.2.0
+
+- Settings to change title
+
 ## 1.1.0
 
 - Add setting: Path depth
