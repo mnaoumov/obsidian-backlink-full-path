@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.3.0
+
+- Add tooltip
+
 ## 1.2.0
 
 - Settings to change title
