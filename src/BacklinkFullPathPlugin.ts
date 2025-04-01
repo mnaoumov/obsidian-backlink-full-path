@@ -10,7 +10,10 @@ import type {
   TreeDom
 } from 'obsidian-typings';
 
-import { MarkdownView } from 'obsidian';
+import {
+  MarkdownView,
+  setTooltip
+} from 'obsidian';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/Async';
 import { getPrototypeOf } from 'obsidian-dev-utils/Object';
 import { registerPatch } from 'obsidian-dev-utils/obsidian/MonkeyAround';
@@ -77,7 +80,7 @@ export class BacklinkFullPathPlugin extends PluginBase<BacklinkFullPathPluginSet
     return resultDom;
   }
 
-  private generateBacklinkTitle(file: TFile): DocumentFragment {
+  private generateBacklinkTitle(file: TFile): HTMLDivElement {
     const fileNamePart = this.settings.shouldIncludeExtension ? file.name : file.basename;
 
     const parentPathParts = file.path.split('/');
@@ -103,14 +106,15 @@ export class BacklinkFullPathPlugin extends PluginBase<BacklinkFullPathPluginSet
     const pathSeparator = this.settings.shouldReversePathParts ? ' ← ' : '/';
     const parentStr = parentPathParts.join(pathSeparator);
 
-    const fragment = createFragment();
-    fragment.appendText(parentStr);
-    fragment.createEl('span', {
+    const container = createDiv();
+    setTooltip(container, file.path);
+    container.appendText(parentStr);
+    container.createEl('span', {
       cls: this.settings.shouldHighlightFileName ? 'backlink-full-path file-name' : '',
       prepend: this.settings.shouldReversePathParts,
       text: fileNamePart
     });
-    return fragment;
+    return container;
   }
 
   private async getBacklinkView(): Promise<BacklinkView | null> {
