@@ -68,9 +68,16 @@ export class BacklinkFullPathPlugin extends PluginBase<BacklinkFullPathPluginSet
   }
 
   private addResult(next: AddResultFn, treeDom: TreeDom, file: TFile, result: ResultDomResult, content: string, shouldShowTitle?: boolean): ResultDom {
-    const basename = file.basename;
-    const name = file.name;
+    const resultDom = next.call(treeDom, file, result, content, shouldShowTitle);
+    const fileNameCaptionEl = resultDom.el.querySelector('.tree-item-inner');
+    if (fileNameCaptionEl) {
+      fileNameCaptionEl.empty();
+      fileNameCaptionEl.appendChild(this.generateBacklinkTitle(file));
+    }
+    return resultDom;
+  }
 
+  private generateBacklinkTitle(file: TFile): DocumentFragment {
     const fileNamePart = this.settings.shouldIncludeExtension ? file.name : file.basename;
 
     const parentPathParts = file.path.split('/');
@@ -96,25 +103,14 @@ export class BacklinkFullPathPlugin extends PluginBase<BacklinkFullPathPluginSet
     const pathSeparator = this.settings.shouldReversePathParts ? ' ← ' : '/';
     const parentStr = parentPathParts.join(pathSeparator);
 
-    const fragment = createFragment((f) => {
-      f.appendText(parentStr);
-      f.createEl('span', {
-        cls: this.settings.shouldHighlightFileName ? 'backlink-full-path file-name' : '',
-        prepend: this.settings.shouldReversePathParts,
-        text: fileNamePart
-      });
+    const fragment = createFragment();
+    fragment.appendText(parentStr);
+    fragment.createEl('span', {
+      cls: this.settings.shouldHighlightFileName ? 'backlink-full-path file-name' : '',
+      prepend: this.settings.shouldReversePathParts,
+      text: fileNamePart
     });
-
-    // HACK: we need to pass the `DocumentFragment` which will be rendered internally within `next.call()`
-    const title = fragment as unknown as string;
-    try {
-      file.basename = title;
-      file.name = title;
-      return next.call(treeDom, file, result, content, shouldShowTitle);
-    } finally {
-      file.basename = basename;
-      file.name = name;
-    }
+    return fragment;
   }
 
   private async getBacklinkView(): Promise<BacklinkView | null> {
