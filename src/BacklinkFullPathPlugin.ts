@@ -15,7 +15,6 @@ import { invokeAsyncSafely } from 'obsidian-dev-utils/Async';
 import { getPrototypeOf } from 'obsidian-dev-utils/Object';
 import { registerPatch } from 'obsidian-dev-utils/obsidian/MonkeyAround';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
-import { join } from 'obsidian-dev-utils/Path';
 import {
   InternalPluginName,
   ViewType
@@ -71,16 +70,43 @@ export class BacklinkFullPathPlugin extends PluginBase<BacklinkFullPathPluginSet
   private addResult(next: AddResultFn, treeDom: TreeDom, file: TFile, result: ResultDomResult, content: string, shouldShowTitle?: boolean): ResultDom {
     const basename = file.basename;
     const name = file.name;
-    const pathParts = file.path.split('/');
-    if (!this.settings.shouldIncludeExtension) {
-      pathParts[pathParts.length - 1] = file.basename;
-    }
 
+    const fileNamePart = this.settings.shouldIncludeExtension ? file.name : file.basename;
+
+    const parentPathParts = file.path.split('/');
+    parentPathParts[parentPathParts.length - 1] = '';
     if (this.settings.pathDepth > 0) {
-      pathParts.splice(0, Math.max(0, pathParts.length - this.settings.pathDepth));
+      const partsToSkipCount = Math.max(0, parentPathParts.length - this.settings.pathDepth);
+      if (partsToSkipCount > 0) {
+        parentPathParts.splice(0, partsToSkipCount);
+        if (this.settings.shouldShowEllipsisForSkippedPathParts) {
+          parentPathParts.unshift('...');
+        }
+      }
     }
 
-    const title = join(...pathParts);
+    if (this.settings.shouldReversePathParts) {
+      parentPathParts.reverse();
+    }
+
+    if (parentPathParts.length === 1) {
+      parentPathParts.pop();
+    }
+
+    const pathSeparator = this.settings.shouldReversePathParts ? ' ← ' : '/';
+    const parentStr = parentPathParts.join(pathSeparator);
+
+    const fragment = createFragment((f) => {
+      f.appendText(parentStr);
+      f.createEl('span', {
+        cls: this.settings.shouldHighlightFileName ? 'backlink-full-path file-name' : '',
+        prepend: this.settings.shouldReversePathParts,
+        text: fileNamePart
+      });
+    });
+
+    // HACK: we need to pass the `DocumentFragment` which will be rendered internally within `next.call()`
+    const title = fragment as unknown as string;
     try {
       file.basename = title;
       file.name = title;

@@ -47,5 +47,45 @@ export class BacklinkFullPathPluginSettingsTab extends PluginSettingsTabBase<Bac
           .setPlaceholder('0');
         numberComponent.inputEl.required = true;
       });
+
+    new Setting(this.containerEl)
+      .setName('Show ellipsis for skipped path parts')
+      .setDesc(createFragment((f) => {
+        f.appendText('Whether to show ellipsis for skipped path parts (for exceeded path depth setting).');
+        f.createEl('br');
+        f.appendText('If enabled, replaces skipped path parts with ellipsis: ');
+        appendCodeBlock(f, '.../bar/foo.md');
+        f.appendText('.');
+        f.createEl('br');
+        f.appendText('If disabled, hides the trimmed path parts: ');
+        appendCodeBlock(f, 'bar/foo.md');
+        f.appendText('.');
+      }))
+      .addToggle((toggle) => {
+        this.bind(toggle, 'shouldShowEllipsisForSkippedPathParts');
+      });
+
+    new Setting(this.containerEl)
+      .setName('Highlight file name')
+      .setDesc('Whether to highlight the file name.')
+      .addToggle((toggle) => {
+        this.bind(toggle, 'shouldHighlightFileName');
+      });
+
+    new Setting(this.containerEl)
+      .setName('Reverse path parts')
+      .setDesc(createFragment((f) => {
+        f.appendText('Whether to reverse the path parts.');
+        f.createEl('br');
+        f.appendText('If enabled, shows paths in reverse order: ');
+        appendCodeBlock(f, 'foo.md ← bar ← baz');
+        f.createEl('br');
+        f.appendText('If disabled, shows paths as is: ');
+        appendCodeBlock(f, 'baz/bar/foo.md');
+        f.appendText('.');
+      }))
+      .addToggle((toggle) => {
+        this.bind(toggle, 'shouldReversePathParts');
+      });
   }
 }
