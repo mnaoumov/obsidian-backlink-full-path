@@ -2,6 +2,7 @@ import type {
   PluginSettingTab,
   TFile
 } from 'obsidian';
+import type { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsManagerBase';
 import type {
   BacklinkPlugin,
   BacklinkView,
@@ -23,23 +24,23 @@ import {
   ViewType
 } from 'obsidian-typings/implementations';
 
-import { BacklinkFullPathPluginSettings } from './BacklinkFullPathPluginSettings.ts';
-import { BacklinkFullPathPluginSettingsTab } from './BacklinkFullPathPluginSettingsTab.ts';
+import { PluginSettings } from './PluginSettings.ts';
+import { PluginSettingsManager } from './PluginSettingsManager.ts';
+import { PluginSettingsTab } from './PluginSettingsTab.ts';
 
 type AddResultFn = TreeDom['addResult'];
 
-export class BacklinkFullPathPlugin extends PluginBase<BacklinkFullPathPluginSettings> {
-  public override async saveSettings(newSettings: BacklinkFullPathPluginSettings): Promise<void> {
-    await super.saveSettings(newSettings);
+export class Plugin extends PluginBase<PluginSettings> {
+  public override async onSaveSettings(): Promise<void> {
     await this.refreshBacklinkPanels();
   }
 
-  protected override createPluginSettings(data: unknown): BacklinkFullPathPluginSettings {
-    return new BacklinkFullPathPluginSettings(data);
+  protected override createPluginSettingsTab(): null | PluginSettingTab {
+    return new PluginSettingsTab(this);
   }
 
-  protected override createPluginSettingsTab(): null | PluginSettingTab {
-    return new BacklinkFullPathPluginSettingsTab(this);
+  protected override createSettingsManager(): PluginSettingsManagerBase<PluginSettings> {
+    return new PluginSettingsManager(this);
   }
 
   protected override async onLayoutReady(): Promise<void> {

@@ -3,9 +3,9 @@ import { appendCodeBlock } from 'obsidian-dev-utils/HTMLElement';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase';
 import { SettingEx } from 'obsidian-dev-utils/obsidian/SettingEx';
 
-import type { BacklinkFullPathPlugin } from './BacklinkFullPathPlugin.ts';
+import type { Plugin } from './Plugin.ts';
 
-export class BacklinkFullPathPluginSettingsTab extends PluginSettingsTabBase<BacklinkFullPathPlugin> {
+export class PluginSettingsTab extends PluginSettingsTabBase<Plugin> {
   public override display(): void {
     this.containerEl.empty();
 

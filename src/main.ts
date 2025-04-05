@@ -1,5 +1,5 @@
 import './styles/main.scss';
-import { BacklinkFullPathPlugin } from './BacklinkFullPathPlugin.ts';
+import { Plugin } from './Plugin.ts';
 
 // eslint-disable-next-line import-x/no-default-export
-export default BacklinkFullPathPlugin;
+export default Plugin;
