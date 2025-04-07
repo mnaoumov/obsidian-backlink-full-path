@@ -1,8 +1,4 @@
-import type {
-  PluginSettingTab,
-  TFile
-} from 'obsidian';
-import type { PluginSettingsManagerBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginSettingsManagerBase';
+import type { TFile } from 'obsidian';
 import type {
   BacklinkPlugin,
   BacklinkView,
@@ -24,22 +20,23 @@ import {
   ViewType
 } from 'obsidian-typings/implementations';
 
-import { PluginSettings } from './PluginSettings.ts';
+import type { PluginTypes } from './PluginTypes.ts';
+
 import { PluginSettingsManager } from './PluginSettingsManager.ts';
 import { PluginSettingsTab } from './PluginSettingsTab.ts';
 
 type AddResultFn = TreeDom['addResult'];
 
-export class Plugin extends PluginBase<PluginSettings> {
+export class Plugin extends PluginBase<PluginTypes> {
   public override async onSaveSettings(): Promise<void> {
     await this.refreshBacklinkPanels();
   }
 
-  protected override createPluginSettingsTab(): null | PluginSettingTab {
+  protected override createPluginSettingsTab(): null | PluginSettingsTab {
     return new PluginSettingsTab(this);
   }
 
-  protected override createSettingsManager(): PluginSettingsManagerBase<PluginSettings> {
+  protected override createSettingsManager(): PluginSettingsManager {
     return new PluginSettingsManager(this);
   }
 
