@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.4.0
+
+- shouldDisplayParentPathOnSeparateLine
+
 ## 1.3.4
 
 - https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/24.1.1
