@@ -101,19 +101,23 @@ export class Plugin extends PluginBase<PluginTypes> {
 
     const container = createDiv();
     setTooltip(container, file.path);
-    if (parentStr) {
-      container.appendText(parentStr);
-      if (this.settings.shouldDisplayParentPathOnSeparateLine) {
-        container.createEl('br');
-      } else {
-        container.createSpan({ prepend: this.settings.shouldReversePathParts, text: pathSeparator });
-      }
-    }
     container.createSpan({
-      cls: this.settings.shouldHighlightFileName ? 'backlink-full-path file-name' : '',
-      prepend: this.settings.shouldReversePathParts && !this.settings.shouldDisplayParentPathOnSeparateLine,
+      cls: ['backlink-full-path', 'file-name', ...(this.settings.shouldHighlightFileName ? ['file-name-highlighted'] : [''])],
       text: fileNamePart
     });
+
+    if (parentStr) {
+      let text = parentStr;
+      if (!this.settings.shouldDisplayParentPathOnSeparateLine) {
+        text = this.settings.shouldReversePathParts ? pathSeparator + text : text + pathSeparator;
+      }
+      container.createSpan({
+        cls: ['backlink-full-path', 'parent-path', ...(this.settings.shouldDisplayParentPathOnSeparateLine ? ['separate-line'] : [])],
+        prepend: !this.settings.shouldReversePathParts && !this.settings.shouldDisplayParentPathOnSeparateLine,
+        text
+      });
+    }
+
     return container;
   }
 

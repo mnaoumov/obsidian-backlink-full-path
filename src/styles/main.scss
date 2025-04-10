@@ -1,6 +1,9 @@
 .backlink-full-path {
-  &.file-name {
+  &.file-name.file-name-highlighted {
     font-size: var(--font-ui-large);
     font-weight: bold;
+  }
+  &.parent-path.separate-line {
+    display: block;
   }
 }
