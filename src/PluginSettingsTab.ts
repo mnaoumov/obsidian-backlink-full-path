@@ -86,5 +86,12 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       .addToggle((toggle) => {
         this.bind(toggle, 'shouldReversePathParts');
       });
+
+    new Setting(this.containerEl)
+      .setName('Display parent path on separate line')
+      .setDesc('Whether to display the parent path on a separate line.')
+      .addToggle((toggle) => {
+        this.bind(toggle, 'shouldDisplayParentPathOnSeparateLine');
+      });
   }
 }

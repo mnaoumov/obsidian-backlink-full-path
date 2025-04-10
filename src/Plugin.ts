@@ -81,10 +81,9 @@ export class Plugin extends PluginBase<PluginTypes> {
   private generateBacklinkTitle(file: TFile): HTMLDivElement {
     const fileNamePart = this.settings.shouldIncludeExtension ? file.name : file.basename;
 
-    const parentPathParts = file.path.split('/');
-    parentPathParts[parentPathParts.length - 1] = '';
+    const parentPathParts = file.path.split('/').slice(0, -1);
     if (this.settings.pathDepth > 0) {
-      const partsToSkipCount = Math.max(0, parentPathParts.length - this.settings.pathDepth);
+      const partsToSkipCount = Math.max(0, parentPathParts.length - this.settings.pathDepth + 1);
       if (partsToSkipCount > 0) {
         parentPathParts.splice(0, partsToSkipCount);
         if (this.settings.shouldShowEllipsisForSkippedPathParts) {
@@ -97,19 +96,22 @@ export class Plugin extends PluginBase<PluginTypes> {
       parentPathParts.reverse();
     }
 
-    if (parentPathParts.length === 1) {
-      parentPathParts.pop();
-    }
-
     const pathSeparator = this.settings.shouldReversePathParts ? ' ← ' : '/';
     const parentStr = parentPathParts.join(pathSeparator);
 
     const container = createDiv();
     setTooltip(container, file.path);
-    container.appendText(parentStr);
-    container.createEl('span', {
+    if (parentStr) {
+      container.appendText(parentStr);
+      if (this.settings.shouldDisplayParentPathOnSeparateLine) {
+        container.createEl('br');
+      } else {
+        container.createSpan({ prepend: this.settings.shouldReversePathParts, text: pathSeparator });
+      }
+    }
+    container.createSpan({
       cls: this.settings.shouldHighlightFileName ? 'backlink-full-path file-name' : '',
-      prepend: this.settings.shouldReversePathParts,
+      prepend: this.settings.shouldReversePathParts && !this.settings.shouldDisplayParentPathOnSeparateLine,
       text: fileNamePart
     });
     return container;
