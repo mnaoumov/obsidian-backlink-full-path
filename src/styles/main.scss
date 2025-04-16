@@ -1,9 +1,16 @@
 .backlink-full-path {
-  &.file-name.file-name-highlighted {
-    font-size: var(--font-ui-large);
-    font-weight: bold;
-  }
-  &.parent-path.separate-line {
-    display: block;
+  &.backlink-control {
+    .full-path {
+      display: none;
+    }
+
+    &[data-should-highlight-file-name=true]::part(file-name) {
+      font-size: var(--font-ui-large);
+      font-weight: bold;
+    }
+
+    &[data-should-display-parent-path-on-separate-line=true]::part(parent-path) {
+      display: block;
+    }
   }
 }

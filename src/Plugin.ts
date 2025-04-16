@@ -99,10 +99,21 @@ export class Plugin extends PluginBase<PluginTypes> {
     const pathSeparator = this.settings.shouldReversePathParts ? ' ← ' : '/';
     const parentStr = parentPathParts.join(pathSeparator);
 
-    const container = createDiv();
-    setTooltip(container, file.path);
+    const container = createDiv({
+      cls: ['backlink-full-path', 'backlink-control']
+    });
+    container.dataset['shouldHighlightFileName'] = this.settings.shouldHighlightFileName.toString();
+    container.dataset['shouldDisplayParentPathOnSeparateLine'] = this.settings.shouldDisplayParentPathOnSeparateLine.toString();
     container.createSpan({
-      cls: ['backlink-full-path', 'file-name', ...(this.settings.shouldHighlightFileName ? ['file-name-highlighted'] : [''])],
+      cls: 'full-path',
+      text: file.path
+    });
+    const shadowRoot = container.attachShadow({ mode: 'open' });
+    setTooltip(container, file.path);
+    shadowRoot.createSpan({
+      attr: {
+        part: 'file-name'
+      },
       text: fileNamePart
     });
 
@@ -111,8 +122,10 @@ export class Plugin extends PluginBase<PluginTypes> {
       if (!this.settings.shouldDisplayParentPathOnSeparateLine) {
         text = this.settings.shouldReversePathParts ? pathSeparator + text : text + pathSeparator;
       }
-      container.createSpan({
-        cls: ['backlink-full-path', 'parent-path', ...(this.settings.shouldDisplayParentPathOnSeparateLine ? ['separate-line'] : [])],
+      shadowRoot.createSpan({
+        attr: {
+          part: 'parent-path'
+        },
         prepend: !this.settings.shouldReversePathParts && !this.settings.shouldDisplayParentPathOnSeparateLine,
         text
       });
