@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.5.0
+
+- Refactor to shadow-root.
+- This keeps `textContent` value used by [Supercharged Links](https://github.com/mdelobelle/obsidian_supercharged_links).
+- Fixes: [Issue #5](https://github.com/mnaoumov/obsidian-backlink-full-path/issues/5).
+
 ## 1.4.0
 
 - shouldDisplayParentPathOnSeparateLine
