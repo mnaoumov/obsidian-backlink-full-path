@@ -3,8 +3,8 @@ import type {
   BacklinkPlugin,
   BacklinkView,
   ResultDom,
-  ResultDomResult,
-  TreeDom
+  ResultDomItem,
+  ResultDomResult
 } from 'obsidian-typings';
 
 import {
@@ -25,19 +25,19 @@ import type { PluginTypes } from './PluginTypes.ts';
 import { PluginSettingsManager } from './PluginSettingsManager.ts';
 import { PluginSettingsTab } from './PluginSettingsTab.ts';
 
-type AddResultFn = TreeDom['addResult'];
+type AddResultFn = ResultDom['addResult'];
 
 export class Plugin extends PluginBase<PluginTypes> {
   public override async onSaveSettings(): Promise<void> {
     await this.refreshBacklinkPanels();
   }
 
-  protected override createPluginSettingsTab(): null | PluginSettingsTab {
-    return new PluginSettingsTab(this);
-  }
-
   protected override createSettingsManager(): PluginSettingsManager {
     return new PluginSettingsManager(this);
+  }
+
+  protected override createSettingsTab(): null | PluginSettingsTab {
+    return new PluginSettingsTab(this);
   }
 
   protected override async onLayoutReady(): Promise<void> {
@@ -49,11 +49,12 @@ export class Plugin extends PluginBase<PluginTypes> {
     // eslint-disable-next-line consistent-this,@typescript-eslint/no-this-alias
     const plugin = this;
     registerPatch(this, getPrototypeOf(backlinksCorePlugin.instance), {
-      onUserEnable: (next: () => void) =>
-        function onUserEnablePatched(this: BacklinkPlugin): void {
+      onUserEnable: (next: () => void) => {
+        return function onUserEnablePatched(this: BacklinkPlugin): void {
           next.call(this);
           plugin.onBacklinksCorePluginEnable();
-        }
+        };
+      }
     });
 
     if (backlinksCorePlugin.enabled) {
@@ -68,14 +69,14 @@ export class Plugin extends PluginBase<PluginTypes> {
     });
   }
 
-  private addResult(next: AddResultFn, treeDom: TreeDom, file: TFile, result: ResultDomResult, content: string, shouldShowTitle?: boolean): ResultDom {
-    const resultDom = next.call(treeDom, file, result, content, shouldShowTitle);
-    const fileNameCaptionEl = resultDom.el.querySelector('.tree-item-inner');
+  private addResult(next: AddResultFn, resultDom: ResultDom, file: TFile, result: ResultDomResult, content: string, shouldShowTitle?: boolean): ResultDomItem {
+    const resultDomItem = next.call(resultDom, file, result, content, shouldShowTitle);
+    const fileNameCaptionEl = resultDomItem.el.querySelector('.tree-item-inner');
     if (fileNameCaptionEl) {
       fileNameCaptionEl.empty();
       fileNameCaptionEl.appendChild(this.generateBacklinkTitle(file));
     }
-    return resultDom;
+    return resultDomItem;
   }
 
   private generateBacklinkTitle(file: TFile): HTMLDivElement {
@@ -157,10 +158,11 @@ export class Plugin extends PluginBase<PluginTypes> {
     // eslint-disable-next-line consistent-this,@typescript-eslint/no-this-alias
     const plugin = this;
     registerPatch(this, getPrototypeOf(backlinkView.backlink.backlinkDom), {
-      addResult: (next: AddResultFn): AddResultFn =>
-        function addResultPatched(this: TreeDom, file, result, content, shouldShowTitle?) {
+      addResult: (next: AddResultFn): AddResultFn => {
+        return function addResultPatched(this: ResultDom, file: TFile, result: ResultDomResult, content: string, shouldShowTitle?: boolean): ResultDomItem {
           return plugin.addResult(next, this, file, result, content, shouldShowTitle);
-        }
+        };
+      }
     });
   }
 
