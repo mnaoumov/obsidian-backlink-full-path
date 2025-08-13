@@ -12,7 +12,7 @@ import {
   setTooltip
 } from 'obsidian';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/Async';
-import { getPrototypeOf } from 'obsidian-dev-utils/Object';
+import { getPrototypeOf } from 'obsidian-dev-utils/ObjectUtils';
 import { registerPatch } from 'obsidian-dev-utils/obsidian/MonkeyAround';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
 import {
