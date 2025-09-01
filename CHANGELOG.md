@@ -1,38 +1,41 @@
 # CHANGELOG
 
+## 1.5.8
+
+- Minor changes
+
 ## 1.5.7
 
-- Update libs
+- Minor changes
 
 ## 1.5.6
 
-- Update libs
+- Minor changes
 
 ## 1.5.5
 
-- Update libs
+- Minor changes
 
 ## 1.5.4
 
-- Update libs
+- Minor changes
 
 ## 1.5.3
 
-- Update libs
+- Minor changes
 
 ## 1.5.2
 
-- Update libs
+- Minor changes
 
 ## 1.5.1
 
-- Update libs
+- Minor changes
 
 ## 1.5.0
 
 - Refactor to shadow-root.
-- This keeps `textContent` value used by [Supercharged Links](https://github.com/mdelobelle/obsidian_supercharged_links).
-- Fixes: [Issue #5](https://github.com/mnaoumov/obsidian-backlink-full-path/issues/5).
+- This keeps `textContent` value used by [Supercharged Links](https://github.com/mdelobelle/obsidian_supercharged_links) (#5)
 
 ## 1.4.0
 
@@ -40,15 +43,15 @@
 
 ## 1.3.4
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/24.1.1
+- Minor changes
 
 ## 1.3.3
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/24.1.0
+- Minor changes
 
 ## 1.3.2
 
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/24.0.1
+- Minor changes
 
 ## 1.3.1
 
@@ -66,7 +69,6 @@
 
 - Add setting: Path depth
 - Add setting: Should include extension
-- https://github.com/mnaoumov/obsidian-dev-utils/releases/tag/20.2.1
 
 ## 1.0.1
 
