@@ -46,13 +46,12 @@ export class Plugin extends PluginBase<PluginTypes> {
       return;
     }
 
-    // eslint-disable-next-line consistent-this,@typescript-eslint/no-this-alias
-    const plugin = this;
+    const that = this;
     registerPatch(this, getPrototypeOf(backlinksCorePlugin.instance), {
       onUserEnable: (next: () => void) => {
         return function onUserEnablePatched(this: BacklinkPlugin): void {
           next.call(this);
-          plugin.onBacklinksCorePluginEnable();
+          that.onBacklinksCorePluginEnable();
         };
       }
     });
@@ -155,12 +154,11 @@ export class Plugin extends PluginBase<PluginTypes> {
       return;
     }
 
-    // eslint-disable-next-line consistent-this,@typescript-eslint/no-this-alias
-    const plugin = this;
+    const that = this;
     registerPatch(this, getPrototypeOf(backlinkView.backlink.backlinkDom), {
       addResult: (next: AddResultFn): AddResultFn => {
         return function addResultPatched(this: ResultDom, file: TFile, result: ResultDomResult, content: string, shouldShowTitle?: boolean): ResultDomItem {
-          return plugin.addResult(next, this, file, result, content, shouldShowTitle);
+          return that.addResult(next, this, file, result, content, shouldShowTitle);
         };
       }
     });
