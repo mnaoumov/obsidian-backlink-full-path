@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.5.19
+
+- chore: update libs
+
 ## 1.5.18
 
 - chore: update libs
