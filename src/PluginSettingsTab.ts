@@ -93,5 +93,12 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginTypes> {
       .addToggle((toggle) => {
         this.bind(toggle, 'shouldDisplayParentPathOnSeparateLine');
       });
+
+    new SettingEx(this.containerEl)
+      .setName('Root paths')
+      .setDesc('The paths to be treated as root paths.')
+      .addMultipleText((multipleText) => {
+        this.bind(multipleText, 'rootPaths');
+      });
   }
 }

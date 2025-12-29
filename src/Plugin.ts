@@ -81,7 +81,16 @@ export class Plugin extends PluginBase<PluginTypes> {
   private generateBacklinkTitle(file: TFile): HTMLDivElement {
     const fileNamePart = this.settings.shouldIncludeExtension ? file.name : file.basename;
 
-    const parentPathParts = file.path.split('/').slice(0, -1);
+    let parentPathParts = file.path.split('/').slice(0, -1);
+
+    for (let length = parentPathParts.length; length >= 1; length--) {
+      const rootPath = parentPathParts.slice(0, length).join('/');
+      if (this.settings.rootPaths.includes(rootPath)) {
+        parentPathParts = parentPathParts.slice(length);
+        break;
+      }
+    }
+
     if (this.settings.pathDepth > 0) {
       const partsToSkipCount = Math.max(0, parentPathParts.length - this.settings.pathDepth + 1);
       if (partsToSkipCount > 0) {
