@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 1.6.0
+
+- feat: add root paths re #7
+- chore: update libs
+
 ## 1.5.19
 
 - chore: update libs
