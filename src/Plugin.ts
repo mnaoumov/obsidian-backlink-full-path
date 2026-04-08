@@ -11,10 +11,10 @@ import {
   MarkdownView,
   setTooltip
 } from 'obsidian';
-import { invokeAsyncSafely } from 'obsidian-dev-utils/Async';
-import { getPrototypeOf } from 'obsidian-dev-utils/ObjectUtils';
-import { registerPatch } from 'obsidian-dev-utils/obsidian/MonkeyAround';
-import { PluginBase } from 'obsidian-dev-utils/obsidian/Plugin/PluginBase';
+import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
+import { getPrototypeOf } from 'obsidian-dev-utils/object-utils';
+import { registerPatch } from 'obsidian-dev-utils/obsidian/monkey-around';
+import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-base';
 import {
   InternalPluginName,
   ViewType
