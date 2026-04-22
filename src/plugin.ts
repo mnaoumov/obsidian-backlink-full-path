@@ -9,7 +9,6 @@ import type {
   PluginManifest,
   TFile
 } from 'obsidian';
-import type { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
 import type {
   BacklinkPlugin,
   BacklinkView,
@@ -71,7 +70,7 @@ export class Plugin extends PluginBase {
         new PluginSettingsTab({
           plugin: this,
           settingsComponent: this.pluginSettingsComponent
-        }) as PluginSettingsTabBase<object>
+        })
       )
     });
   }
