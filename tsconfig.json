@@ -3,7 +3,6 @@
   "compilerOptions": {
     "allowArbitraryExtensions": true,
     "allowImportingTsExtensions": true,
-    "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
@@ -22,8 +21,7 @@
     "types": [
       "@total-typescript/ts-reset",
       "node",
-      "obsidian-typings",
-      "svelte"
+      "obsidian-typings"
     ],
     "verbatimModuleSyntax": true
   },
@@ -31,7 +29,8 @@
     "./.markdownlint-cli2.mts",
     "./commitlint.config.ts",
     "./eslint.config.mts",
+    "./scripts/**/*.ts",
     "./src/**/*.ts",
-    "./scripts/**/*.ts"
+    "./vitest.config.ts"
   ]
 }
