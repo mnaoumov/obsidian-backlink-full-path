@@ -15,7 +15,7 @@ import type {
   ResultDom,
   ResultDomItem,
   ResultDomResult
-} from 'obsidian-typings';
+} from '@obsidian-typings/obsidian-public-latest';
 
 import {
   MarkdownView,
@@ -26,10 +26,11 @@ import { getPrototypeOf } from 'obsidian-dev-utils/object-utils';
 import { registerPatch } from 'obsidian-dev-utils/obsidian/monkey-around';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/plugin/components/plugin-settings-tab-component';
 import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin';
+import { PluginDataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import {
   InternalPluginName,
   ViewType
-} from 'obsidian-typings/implementations';
+} from '@obsidian-typings/obsidian-public-latest/implementations';
 
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
@@ -54,20 +55,15 @@ export class Plugin extends PluginBase {
   public constructor(app: App, manifest: PluginManifest) {
     super(app, manifest);
 
-    this.pluginSettingsComponent = this.registerComponent({
-      component: new PluginSettingsComponent(this),
-      shouldPreload: true
-    });
+    this.pluginSettingsComponent = this.addChild(new PluginSettingsComponent(new PluginDataHandler(this)));
 
-    this.registerComponent({
-      component: new PluginSettingsTabComponent(
-        this,
-        new PluginSettingsTab({
-          plugin: this,
-          settingsComponent: this.pluginSettingsComponent
-        })
-      )
-    });
+    this.addChild(new PluginSettingsTabComponent({
+      plugin: this,
+      pluginSettingsTab: new PluginSettingsTab({
+        plugin: this,
+        settingsComponent: this.pluginSettingsComponent
+      })
+    }));
   }
 
   /**

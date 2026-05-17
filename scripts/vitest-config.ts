@@ -22,7 +22,7 @@ export const config = defineConfig({
     onConsoleLog: (): false => false,
     server: {
       deps: {
-        inline: ['obsidian-typings']
+        inline: ['@obsidian-typings', 'obsidian-dev-utils']
       }
     },
     setupFiles: ['obsidian-test-mocks/setup']
