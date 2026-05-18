@@ -4,7 +4,7 @@
  * Settings component that manages plugin settings persistence.
  */
 
-import { PluginSettingsComponentBase } from 'obsidian-dev-utils/obsidian/plugin/components/plugin-settings-component';
+import { PluginSettingsComponentBase } from 'obsidian-dev-utils/obsidian/components/plugin-settings-component';
 
 import { PluginSettings } from './plugin-settings.ts';
 
