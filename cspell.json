@@ -17,7 +17,8 @@
     "mnaoumov",
     "Naumov",
     "noopAsync",
-    "tsbuildinfo"
+    "tsbuildinfo",
+    "unsanitized"
   ],
   "ignoreWords": [],
   "import": [],

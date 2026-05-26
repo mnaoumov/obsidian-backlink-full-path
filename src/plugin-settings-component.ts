@@ -4,20 +4,23 @@
  * Settings component that manages plugin settings persistence.
  */
 
+import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
+import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
+
 import { PluginSettingsComponentBase } from 'obsidian-dev-utils/obsidian/components/plugin-settings-component';
 
 import { PluginSettings } from './plugin-settings.ts';
 
-/**
- * Manages persistence and lifecycle for {@link PluginSettings}.
- */
+interface PluginSettingsComponentConstructorParams {
+  readonly dataHandler: DataHandler;
+  readonly pluginEventSource: PluginEventSource;
+}
+
 export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginSettings> {
-  /**
-   * Creates the default settings instance.
-   *
-   * @returns A new {@link PluginSettings} with default values.
-   */
-  protected override createDefaultSettings(): PluginSettings {
-    return new PluginSettings();
+  public constructor(params: PluginSettingsComponentConstructorParams) {
+    super({
+      ...params,
+      pluginSettingsClass: PluginSettings
+    });
   }
 }

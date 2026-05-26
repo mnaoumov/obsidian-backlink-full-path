@@ -1,11 +1,3 @@
-/**
- * @file
- *
- * Settings tab UI for the Backlink Full Path plugin.
- */
-
-import type { PluginSettingsTabBaseParams } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
-
 import { Setting } from 'obsidian';
 import { appendCodeBlock } from 'obsidian-dev-utils/html-element';
 import { PluginSettingsTabBase } from 'obsidian-dev-utils/obsidian/plugin/plugin-settings-tab';
@@ -13,22 +5,7 @@ import { SettingEx } from 'obsidian-dev-utils/obsidian/setting-ex';
 
 import type { PluginSettings } from './plugin-settings.ts';
 
-/**
- * Settings tab for the Backlink Full Path plugin.
- */
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
-  /**
-   * Creates a new settings tab.
-   *
-   * @param params - The settings tab params.
-   */
-  public constructor(params: PluginSettingsTabBaseParams<PluginSettings>) {
-    super(params);
-  }
-
-  /**
-   * Renders the settings tab UI.
-   */
   public override display(): void {
     super.display();
 

@@ -5,32 +5,33 @@
  */
 
 import type {
-  App,
-  PluginManifest,
-  TFile
-} from 'obsidian';
-import type {
   BacklinkPlugin,
   BacklinkView,
   ResultDom,
   ResultDomItem,
   ResultDomResult
 } from '@obsidian-typings/obsidian-public-latest';
+import type {
+  App,
+  PluginManifest,
+  TFile
+} from 'obsidian';
 
+import {
+  InternalPluginName,
+  ViewType
+} from '@obsidian-typings/obsidian-public-latest/implementations';
 import {
   MarkdownView,
   setTooltip
 } from 'obsidian';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
 import { getPrototypeOf } from 'obsidian-dev-utils/object-utils';
-import { registerPatch } from 'obsidian-dev-utils/obsidian/monkey-around';
+import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/monkey-around-component';
 import { PluginSettingsTabComponent } from 'obsidian-dev-utils/obsidian/components/plugin-settings-tab-component';
-import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin';
 import { PluginDataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
-import {
-  InternalPluginName,
-  ViewType
-} from '@obsidian-typings/obsidian-public-latest/implementations';
+import { PluginBase } from 'obsidian-dev-utils/obsidian/plugin/plugin';
+import { PluginEventSourceImpl } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
@@ -55,39 +56,45 @@ export class Plugin extends PluginBase {
   public constructor(app: App, manifest: PluginManifest) {
     super(app, manifest);
 
-    this.pluginSettingsComponent = this.addChild(new PluginSettingsComponent(new PluginDataHandler(this)));
-
-    this.addChild(new PluginSettingsTabComponent({
-      plugin: this,
-      pluginSettingsTab: new PluginSettingsTab({
-        plugin: this,
-        settingsComponent: this.pluginSettingsComponent
+    this.pluginSettingsComponent = this.addChild(
+      new PluginSettingsComponent({
+        dataHandler: new PluginDataHandler(this),
+        pluginEventSource: new PluginEventSourceImpl(this)
       })
-    }));
+    );
+
+    this.addChild(
+      new PluginSettingsTabComponent({
+        plugin: this,
+        pluginSettingsTab: new PluginSettingsTab({
+          plugin: this,
+          pluginSettingsComponent: this.pluginSettingsComponent
+        })
+      })
+    );
   }
 
   /**
    * Called after pre-loaded components are initialized.
    */
-  protected override async onloadImpl(): Promise<void> {
-    await super.onloadImpl();
-
-    this.pluginSettingsComponent.on('saveSettings', () => {
-      invokeAsyncSafely(() => this.refreshBacklinkPanels());
+  public override onload(): void {
+    this.pluginSettingsComponent.on('saveSettings', async () => {
+      await this.refreshBacklinkPanels();
     });
   }
 
   /**
    * Called when the workspace layout is ready.
    */
-  protected override async onLayoutReady(): Promise<void> {
+  protected async onLayoutReady(): Promise<void> {
     const backlinksCorePlugin = this.app.internalPlugins.getPluginById(InternalPluginName.Backlink);
     if (!backlinksCorePlugin) {
       return;
     }
 
     const that = this;
-    registerPatch(this, getPrototypeOf(backlinksCorePlugin.instance), {
+    const patch = this.addChild(new MonkeyAroundComponent());
+    patch.registerPatch(getPrototypeOf(backlinksCorePlugin.instance), {
       onUserEnable: (next: () => void) => {
         return function onUserEnablePatched(this: BacklinkPlugin): void {
           next.call(this);
@@ -204,7 +211,8 @@ export class Plugin extends PluginBase {
     }
 
     const that = this;
-    registerPatch(this, getPrototypeOf(backlinkView.backlink.backlinkDom), {
+    const patch = this.addChild(new MonkeyAroundComponent());
+    patch.registerPatch(getPrototypeOf(backlinkView.backlink.backlinkDom), {
       addResult: (next: AddResultFn): AddResultFn => {
         return function addResultPatched(this: ResultDom, file: TFile, result: ResultDomResult, content: string, shouldShowTitle?: boolean): ResultDomItem {
           return that.addResult(next, this, file, result, content, shouldShowTitle);
