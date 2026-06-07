@@ -14,7 +14,7 @@ import type {
   PluginManifest,
   TFile
 } from 'obsidian';
-import type { PartialDeep } from 'type-fest';
+import type { StrictProxyPartial } from 'obsidian-dev-utils/strict-proxy';
 
 import {
   bypassStrictProxy,
@@ -128,12 +128,15 @@ function getSettingsComponent(plugin: Plugin): SettingsComponentProxy {
 }
 
 /**
- * Sets `_loaded` to true on the plugin (bypassing strict proxy).
+ * Marks the plugin and its internal wrapperComponent as loaded
+ * without going through the full load lifecycle.
  *
  * @param plugin - The plugin to mark as loaded.
  */
 function markPluginLoaded(plugin: Plugin): void {
   Reflect.set(bypassStrictProxy(plugin), '_loaded', true);
+  const wrapperComponent = Reflect.get(bypassStrictProxy(plugin), 'wrapperComponent') as object;
+  Reflect.set(bypassStrictProxy(wrapperComponent), '_loaded', true);
 }
 
 /**
@@ -150,6 +153,22 @@ function mockInternalPlugins(plugin: Plugin, returnValue: unknown): ReturnType<t
 }
 
 /**
+ * Mocks `obsidianDevUtilsState` on both the plugin's app and the
+ * global `app` so that `super.onload()` can complete without errors.
+ * The library accesses state via the passed app instance and via the
+ * global `getApp()` fallback (`globalThis.app`).
+ *
+ * @param plugin - The plugin whose app needs the mock.
+ */
+function mockObsidianDevUtilsState(plugin: Plugin): void {
+  Reflect.set(bypassStrictProxy(plugin.app), 'obsidianDevUtilsState', {});
+  const globalApp = (window as Record<string, unknown>)['app'];
+  if (globalApp) {
+    Reflect.set(bypassStrictProxy(globalApp), 'obsidianDevUtilsState', {});
+  }
+}
+
+/**
  * Creates a strict proxy, working around `PartialDeep<T>` incompatibility
  * with complex DOM types by casting the partial before passing to strictProxy.
  *
@@ -158,7 +177,7 @@ function mockInternalPlugins(plugin: Plugin, returnValue: unknown): ReturnType<t
  */
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- T is used in the body for strictProxy<T>.
 function mockProxy<T>(partial: object): T {
-  return strictProxy<T>(partial as PartialDeep<T>);
+  return strictProxy<T>(partial as StrictProxyPartial<T>);
 }
 
 /**
@@ -185,18 +204,21 @@ describe('Plugin', () => {
   });
 
   describe('onload', () => {
-    it('should register saveSettings event listener', () => {
+    it('should register saveSettings event listener', async () => {
       const { plugin } = createTestPlugin();
+      mockObsidianDevUtilsState(plugin);
+
       const settingsComponent = getSettingsComponent(plugin);
       const onSpy = vi.spyOn(settingsComponent, 'on');
 
-      plugin.onload();
+      await plugin.onload();
 
       expect(onSpy).toHaveBeenCalledWith('saveSettings', expect.any(Function));
     });
 
     it('should call refreshBacklinkPanels when saveSettings is triggered', async () => {
       const { plugin } = createTestPlugin();
+      mockObsidianDevUtilsState(plugin);
 
       const refreshBacklinkPanels = vi.fn().mockResolvedValue(undefined);
       Reflect.set(plugin, 'refreshBacklinkPanels', refreshBacklinkPanels);
@@ -209,7 +231,7 @@ describe('Plugin', () => {
         }) as (...args: never[]) => void
       );
 
-      plugin.onload();
+      await plugin.onload();
 
       expect(savedCallback).toBeDefined();
       if (savedCallback) {

@@ -7,6 +7,7 @@ import type { PluginSettings } from './plugin-settings.ts';
 
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   public override display(): void {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated -- Not ready to migrate `display()`.
     super.display();
 
     new Setting(this.containerEl)

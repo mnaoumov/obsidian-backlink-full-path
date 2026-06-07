@@ -77,7 +77,8 @@ export class Plugin extends PluginBase {
   /**
    * Called after pre-loaded components are initialized.
    */
-  public override onload(): void {
+  public override async onload(): Promise<void> {
+    await super.onload();
     this.pluginSettingsComponent.on('saveSettings', async () => {
       await this.refreshBacklinkPanels();
     });
