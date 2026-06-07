@@ -162,7 +162,7 @@ function mockInternalPlugins(plugin: Plugin, returnValue: unknown): ReturnType<t
  */
 function mockObsidianDevUtilsState(plugin: Plugin): void {
   Reflect.set(bypassStrictProxy(plugin.app), 'obsidianDevUtilsState', {});
-  const globalApp = (window as Record<string, unknown>)['app'];
+  const globalApp = Reflect.get(window, 'app') as unknown;
   if (globalApp) {
     Reflect.set(bypassStrictProxy(globalApp), 'obsidianDevUtilsState', {});
   }
