@@ -41,6 +41,7 @@ function createDisplayedTab(): DisplayedTabResult {
     pluginSettingsComponent
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-deprecated -- Not ready to migrate `display()`.
   tab.display();
   const names = getSettingNames(tab.containerEl);
   return { names, tab };
