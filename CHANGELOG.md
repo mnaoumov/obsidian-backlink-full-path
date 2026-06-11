@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.6.4
+
+- chore: update libs
+
 ## 1.6.3
 
 - chore: update template
