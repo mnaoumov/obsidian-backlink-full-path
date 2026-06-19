@@ -1,9 +1,3 @@
-/**
- * @file
- *
- * Settings component that manages plugin settings persistence.
- */
-
 import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
 import type { PluginEventSource } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 

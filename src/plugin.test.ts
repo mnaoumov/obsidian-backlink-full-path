@@ -1,9 +1,3 @@
-/**
- * @file
- *
- * Tests for the Plugin class.
- */
-
 import type {
   BacklinkView,
   ResultDom,
@@ -48,16 +42,10 @@ interface SettingsComponentProxy {
 }
 
 interface TestPluginResult {
-  app: ReturnType<typeof App.createConfigured__>;
-  plugin: Plugin;
+  readonly app: ReturnType<typeof App.createConfigured__>;
+  readonly plugin: Plugin;
 }
 
-/**
- * Creates a mock TFile for testing.
- *
- * @param path - The file path.
- * @returns A mock TFile.
- */
 function createMockFile(path: string): TFile {
   const parts = path.split('/');
   const name = parts.at(-1) ?? '';
@@ -72,12 +60,6 @@ function createMockFile(path: string): TFile {
   });
 }
 
-/**
- * Creates a mock ResultDomItem with an element that has .tree-item-inner.
- *
- * @param hasTreeItemInner - Whether the result element should have a .tree-item-inner child.
- * @returns The mock ResultDomItem.
- */
 function createMockResultDomItem(hasTreeItemInner: boolean): ResultDomItem {
   const el = activeDocument.createElement('div');
   if (hasTreeItemInner) {
@@ -89,11 +71,6 @@ function createMockResultDomItem(hasTreeItemInner: boolean): ResultDomItem {
   return mockProxy<ResultDomItem>({ el });
 }
 
-/**
- * Creates a minimal PluginManifest for testing.
- *
- * @returns A test PluginManifest.
- */
 function createTestManifest(): PluginManifest {
   return {
     author: 'test',
@@ -105,11 +82,6 @@ function createTestManifest(): PluginManifest {
   };
 }
 
-/**
- * Creates a test Plugin instance with a configured App.
- *
- * @returns The plugin and app.
- */
 function createTestPlugin(): TestPluginResult {
   const app = App.createConfigured__();
   const manifest = createTestManifest();
@@ -117,49 +89,22 @@ function createTestPlugin(): TestPluginResult {
   return { app, plugin };
 }
 
-/**
- * Gets the plugin's private pluginSettingsComponent via Reflect.
- *
- * @param plugin - The plugin instance.
- * @returns The pluginSettingsComponent.
- */
 function getSettingsComponent(plugin: Plugin): SettingsComponentProxy {
   return Reflect.get(plugin, 'pluginSettingsComponent') as SettingsComponentProxy;
 }
 
-/**
- * Marks the plugin and its internal wrapperComponent as loaded
- * without going through the full load lifecycle.
- *
- * @param plugin - The plugin to mark as loaded.
- */
 function markPluginLoaded(plugin: Plugin): void {
   Reflect.set(bypassStrictProxy(plugin), '_loaded', true);
   const wrapperComponent = Reflect.get(bypassStrictProxy(plugin), 'wrapperComponent') as object;
   Reflect.set(bypassStrictProxy(wrapperComponent), '_loaded', true);
 }
 
-/**
- * Sets up internalPlugins mock on the plugin's app.
- *
- * @param plugin - The plugin.
- * @param returnValue - The value to return from getPluginById.
- * @returns The mocked getPluginById function.
- */
 function mockInternalPlugins(plugin: Plugin, returnValue: unknown): ReturnType<typeof vi.fn> {
   const getPluginById = vi.fn().mockReturnValue(returnValue);
   Reflect.set(bypassStrictProxy(plugin.app), 'internalPlugins', strictProxy({ getPluginById }));
   return getPluginById;
 }
 
-/**
- * Mocks `obsidianDevUtilsState` on both the plugin's app and the
- * global `app` so that `super.onload()` can complete without errors.
- * The library accesses state via the passed app instance and via the
- * global `getApp()` fallback (`globalThis.app`).
- *
- * @param plugin - The plugin whose app needs the mock.
- */
 function mockObsidianDevUtilsState(plugin: Plugin): void {
   Reflect.set(bypassStrictProxy(plugin.app), 'obsidianDevUtilsState', {});
   const globalApp = Reflect.get(window, 'app') as unknown;
@@ -168,25 +113,11 @@ function mockObsidianDevUtilsState(plugin: Plugin): void {
   }
 }
 
-/**
- * Creates a strict proxy, working around `PartialDeep<T>` incompatibility
- * with complex DOM types by casting the partial before passing to strictProxy.
- *
- * @param partial - A partial object with the mocked members.
- * @returns A strict proxy typed as T.
- */
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- T is used in the body for strictProxy<T>.
 function mockProxy<T>(partial: object): T {
   return strictProxy<T>(partial as StrictProxyPartial<T>);
 }
 
-/**
- * Calls a private/protected method on an object via Reflect and binds it.
- *
- * @param obj - The object.
- * @param name - The method name.
- * @returns The bound method.
- */
 function privateMethod(obj: object, name: string): (...args: never[]) => unknown {
   const fn = Reflect.get(obj, name) as (...args: never[]) => unknown;
   return fn.bind(obj);
@@ -404,12 +335,6 @@ describe('Plugin', () => {
       settings = getSettingsComponent(plugin).settings;
     });
 
-    /**
-     * Calls the private generateBacklinkTitle method.
-     *
-     * @param file - The TFile to generate a title for.
-     * @returns The generated HTMLDivElement.
-     */
     function callGenerateBacklinkTitle(file: TFile): HTMLDivElement {
       const fn = privateMethod(plugin, 'generateBacklinkTitle');
       return (fn as (...args: unknown[]) => unknown)(file) as HTMLDivElement;
