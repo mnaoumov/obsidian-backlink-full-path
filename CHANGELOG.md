@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 1.6.5
+
+- docs: remove resolved file-protocol
+- test: migrate component tests to new template architecture and restore 100% coverage
+- refactor: new template
+- chore: update version script
+
 ## 1.6.4
 
 - chore: update libs
