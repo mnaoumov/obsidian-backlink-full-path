@@ -1,133 +1,91 @@
-import type { PluginManifest } from 'obsidian';
+import type { Plugin } from 'obsidian';
+import type { PluginSettingsComponentBase } from 'obsidian-dev-utils/obsidian/components/plugin-settings-component';
 
+import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
-  App,
-  ToggleComponent
-} from 'obsidian-test-mocks/obsidian';
-import {
-  beforeAll,
   describe,
   expect,
-  it
+  it,
+  vi
 } from 'vitest';
 
+import type { PluginSettings } from './plugin-settings.ts';
+
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
-import { Plugin } from './plugin.ts';
 
-interface DisplayedTabResult {
-  readonly names: string[];
-  readonly tab: PluginSettingsTab;
-}
+vi.mock('obsidian-dev-utils/obsidian/setting-ex', () => {
+  class MockSettingEx {
+    public constructor(public readonly containerEl: HTMLElement) {
+    }
 
-function createDisplayedTab(): DisplayedTabResult {
-  const plugin = createPlugin();
-  const pluginSettingsComponent = Reflect.get(plugin, 'pluginSettingsComponent') as InstanceType<
-    typeof import('./plugin-settings-component.ts').PluginSettingsComponent
-  >;
+    public addMultipleText(cb: (component: unknown) => void): this {
+      cb({ setMin: vi.fn() });
+      return this;
+    }
 
-  const tab = new PluginSettingsTab({
-    plugin,
-    pluginSettingsComponent
-  });
+    public addNumber(cb: (component: unknown) => void): this {
+      cb({ setMin: vi.fn() });
+      return this;
+    }
 
-  tab.displayLegacy();
-  const names = getSettingNames(tab.containerEl);
-  return { names, tab };
-}
+    public setDesc(): this {
+      return this;
+    }
 
-function createPlugin(): Plugin {
-  const app = App.createConfigured__();
-  const manifest: PluginManifest = {
-    author: 'test',
-    description: 'test',
-    id: 'backlink-full-path',
-    minAppVersion: '0.0.0',
-    name: 'Backlink Full Path',
-    version: '1.0.0'
-  };
-  return new Plugin(app.asOriginalType__(), manifest);
-}
-
-function getSettingNames(containerEl: HTMLElement): string[] {
-  const names: string[] = [];
-  for (const settingEl of containerEl.children) {
-    // SettingEl contains [controlEl, infoEl].
-    // InfoEl contains [nameEl, descEl].
-    const infoEl = settingEl.children[1];
-    if (infoEl) {
-      const nameEl = infoEl.children[0];
-      if (nameEl?.textContent) {
-        names.push(nameEl.textContent);
-      }
+    public setName(): this {
+      return this;
     }
   }
-  return names;
-}
 
-function patchMissingMockProperties(): void {
-  // Obsidian-dev-utils checks for setPlaceholderValue to detect text-based components.
-  if (!('setPlaceholderValue' in ToggleComponent.prototype)) {
-    Object.defineProperty(ToggleComponent.prototype, 'setPlaceholderValue', { value: undefined });
-  }
-}
-
-beforeAll(() => {
-  patchMissingMockProperties();
+  return { SettingEx: MockSettingEx };
 });
 
 describe('PluginSettingsTab', () => {
-  it('should be constructable', () => {
-    const plugin = createPlugin();
-    const pluginSettingsComponent = Reflect.get(plugin, 'pluginSettingsComponent') as InstanceType<
-      typeof import('./plugin-settings-component.ts').PluginSettingsComponent
-    >;
+  it('should display all settings bound to the correct properties', () => {
+    const settings = strictProxy<PluginSettings>({
+      pathDepth: 0,
+      rootPaths: [],
+      shouldDisplayParentPathOnSeparateLine: false,
+      shouldHighlightFileName: true,
+      shouldIncludeExtension: true,
+      shouldReversePathParts: false,
+      shouldShowEllipsisForSkippedPathParts: true
+    });
+
+    const pluginSettingsComponent = strictProxy<PluginSettingsComponentBase<PluginSettings>>({
+      on: vi.fn().mockReturnValue({ id: 'ref' }),
+      settings
+    });
+
+    const plugin = strictProxy<Plugin>({
+      app: {
+        workspace: {
+          on: vi.fn().mockReturnValue({ id: 'test' })
+        }
+      }
+    });
+
     const tab = new PluginSettingsTab({
       plugin,
       pluginSettingsComponent
     });
-    expect(tab).toBeInstanceOf(PluginSettingsTab);
-  });
 
-  describe('display', () => {
-    it('should create all 7 settings', () => {
-      const { names } = createDisplayedTab();
-      const EXPECTED_SETTING_COUNT = 7;
-      expect(names.length).toBe(EXPECTED_SETTING_COUNT);
-    });
+    tab.containerEl = activeDocument.createElement('div');
 
-    it('should create Include extension setting', () => {
-      const { names } = createDisplayedTab();
-      expect(names).toContain('Include extension');
-    });
+    const bindSpy = vi.spyOn(tab, 'bind').mockReturnValue({ setMin: vi.fn() });
 
-    it('should create Path depth setting', () => {
-      const { names } = createDisplayedTab();
-      expect(names).toContain('Path depth');
-    });
+    tab.displayLegacy();
 
-    it('should create Show ellipsis for skipped path parts setting', () => {
-      const { names } = createDisplayedTab();
-      expect(names).toContain('Show ellipsis for skipped path parts');
-    });
-
-    it('should create Highlight file name setting', () => {
-      const { names } = createDisplayedTab();
-      expect(names).toContain('Highlight file name');
-    });
-
-    it('should create Reverse path parts setting', () => {
-      const { names } = createDisplayedTab();
-      expect(names).toContain('Reverse path parts');
-    });
-
-    it('should create Display parent path on separate line setting', () => {
-      const { names } = createDisplayedTab();
-      expect(names).toContain('Display parent path on separate line');
-    });
-
-    it('should create Root paths setting', () => {
-      const { names } = createDisplayedTab();
-      expect(names).toContain('Root paths');
-    });
+    const EXPECTED_BIND_COUNT = 7;
+    expect(bindSpy).toHaveBeenCalledTimes(EXPECTED_BIND_COUNT);
+    expect(bindSpy.mock.calls.map((call) => call[1])).toEqual([
+      'shouldIncludeExtension',
+      'pathDepth',
+      'shouldShowEllipsisForSkippedPathParts',
+      'shouldHighlightFileName',
+      'shouldReversePathParts',
+      'shouldDisplayParentPathOnSeparateLine',
+      'rootPaths'
+    ]);
   });
 });
