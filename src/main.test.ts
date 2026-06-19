@@ -1,9 +1,3 @@
-/**
- * @file
- *
- * Tests for the main module default export.
- */
-
 import {
   describe,
   expect,

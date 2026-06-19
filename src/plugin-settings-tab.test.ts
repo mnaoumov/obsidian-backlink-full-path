@@ -1,9 +1,3 @@
-/**
- * @file
- *
- * Tests for the PluginSettingsTab class.
- */
-
 import type { PluginManifest } from 'obsidian';
 
 import {
@@ -21,15 +15,10 @@ import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { Plugin } from './plugin.ts';
 
 interface DisplayedTabResult {
-  names: string[];
-  tab: PluginSettingsTab;
+  readonly names: string[];
+  readonly tab: PluginSettingsTab;
 }
 
-/**
- * Creates a PluginSettingsTab attached to a freshly created Plugin and calls display().
- *
- * @returns An object with the tab and the extracted setting names.
- */
 function createDisplayedTab(): DisplayedTabResult {
   const plugin = createPlugin();
   const pluginSettingsComponent = Reflect.get(plugin, 'pluginSettingsComponent') as InstanceType<
@@ -41,17 +30,11 @@ function createDisplayedTab(): DisplayedTabResult {
     pluginSettingsComponent
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-deprecated -- Not ready to migrate `display()`.
-  tab.display();
+  tab.displayLegacy();
   const names = getSettingNames(tab.containerEl);
   return { names, tab };
 }
 
-/**
- * Creates a Plugin instance with mocked dependencies.
- *
- * @returns The created Plugin.
- */
 function createPlugin(): Plugin {
   const app = App.createConfigured__();
   const manifest: PluginManifest = {
@@ -65,15 +48,6 @@ function createPlugin(): Plugin {
   return new Plugin(app.asOriginalType__(), manifest);
 }
 
-/**
- * Extracts setting names from the tab's containerEl after calling display().
- *
- * Each Setting mock creates a settingEl > [controlEl, infoEl > [nameEl, descEl]].
- * The nameEl is the second-level div that contains the setting name text.
- *
- * @param containerEl - The container element.
- * @returns The array of setting name strings.
- */
 function getSettingNames(containerEl: HTMLElement): string[] {
   const names: string[] = [];
   for (const settingEl of containerEl.children) {
@@ -90,10 +64,6 @@ function getSettingNames(containerEl: HTMLElement): string[] {
   return names;
 }
 
-/**
- * Patches missing mock properties on obsidian-test-mocks components
- * that obsidian-dev-utils's `bind()` method probes via strict proxy.
- */
 function patchMissingMockProperties(): void {
   // Obsidian-dev-utils checks for setPlaceholderValue to detect text-based components.
   if (!('setPlaceholderValue' in ToggleComponent.prototype)) {

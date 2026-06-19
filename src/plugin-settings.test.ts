@@ -1,9 +1,3 @@
-/**
- * @file
- *
- * Tests for PluginSettings default values.
- */
-
 import {
   describe,
   expect,
