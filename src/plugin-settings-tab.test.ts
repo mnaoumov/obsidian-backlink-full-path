@@ -1,91 +1,95 @@
-import type { Plugin } from 'obsidian';
-import type { PluginSettingsComponentBase } from 'obsidian-dev-utils/obsidian/components/plugin-settings-component';
+import type { DataHandler } from 'obsidian-dev-utils/obsidian/data-handler';
+import type { PluginEventMap } from 'obsidian-dev-utils/obsidian/plugin/plugin-event-source';
 
+import { AsyncEvents } from 'obsidian-dev-utils/async-events';
+import { noopAsync } from 'obsidian-dev-utils/function';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
+  App,
+  DropdownComponent as DropdownComponentClass,
+  TextComponent as TextComponentClass,
+  ToggleComponent as ToggleComponentClass
+} from 'obsidian-test-mocks/obsidian';
+import {
+  beforeAll,
   describe,
   expect,
-  it,
-  vi
+  it
 } from 'vitest';
 
-import type { PluginSettings } from './plugin-settings.ts';
+import type { Plugin } from './plugin.ts';
 
+import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 
-vi.mock('obsidian-dev-utils/obsidian/setting-ex', () => {
-  class MockSettingEx {
-    public constructor(public readonly containerEl: HTMLElement) {
-    }
-
-    public addMultipleText(cb: (component: unknown) => void): this {
-      cb({ setMin: vi.fn() });
-      return this;
-    }
-
-    public addNumber(cb: (component: unknown) => void): this {
-      cb({ setMin: vi.fn() });
-      return this;
-    }
-
-    public setDesc(): this {
-      return this;
-    }
-
-    public setName(): this {
-      return this;
-    }
+class MockDataHandler implements DataHandler {
+  public async loadData(): Promise<unknown> {
+    await noopAsync();
+    return {};
   }
 
-  return { SettingEx: MockSettingEx };
+  public async saveData(): Promise<void> {
+    await noopAsync();
+  }
+}
+
+async function createTab(): Promise<PluginSettingsTab> {
+  const app = App.createConfigured__();
+  const pluginSettingsComponent = new PluginSettingsComponent({
+    dataHandler: new MockDataHandler(),
+    pluginEventSource: new AsyncEvents<PluginEventMap>()
+  });
+  // The component must be loaded before its settings can be edited; obsidian-dev-utils.
+  // Makes setProperty/editAndSave throw when the component is not loaded.
+  await pluginSettingsComponent.loadWithPromises();
+  const plugin = strictProxy<Plugin>({ app: app.asOriginalType__() });
+  const tab = new PluginSettingsTab({
+    plugin,
+    pluginSettingsComponent
+  });
+
+  tab.displayLegacy();
+  return tab;
+}
+
+function getSettingNames(tab: PluginSettingsTab): string[] {
+  const names: string[] = [];
+  for (const settingEl of Array.from(tab.containerEl.children)) {
+    const infoEl = settingEl.children[1];
+    const nameEl = infoEl?.children[0];
+    if (nameEl?.textContent) {
+      names.push(nameEl.textContent);
+    }
+  }
+  return names;
+}
+
+beforeAll(() => {
+  // Obsidian-dev-utils' bind() probes setPlaceholderValue to detect text-based components.
+  for (const proto of [ToggleComponentClass.prototype, DropdownComponentClass.prototype, TextComponentClass.prototype]) {
+    if (!('setPlaceholderValue' in proto)) {
+      Object.defineProperty(proto, 'setPlaceholderValue', { value: undefined });
+    }
+  }
 });
 
 describe('PluginSettingsTab', () => {
-  it('should display all settings bound to the correct properties', () => {
-    const settings = strictProxy<PluginSettings>({
-      pathDepth: 0,
-      rootPaths: [],
-      shouldDisplayParentPathOnSeparateLine: false,
-      shouldHighlightFileName: true,
-      shouldIncludeExtension: true,
-      shouldReversePathParts: false,
-      shouldShowEllipsisForSkippedPathParts: true
-    });
+  it('should be constructable', async () => {
+    const tab = await createTab();
+    expect(tab).toBeInstanceOf(PluginSettingsTab);
+  });
 
-    const pluginSettingsComponent = strictProxy<PluginSettingsComponentBase<PluginSettings>>({
-      on: vi.fn().mockReturnValue({ id: 'ref' }),
-      settings
-    });
-
-    const plugin = strictProxy<Plugin>({
-      app: {
-        workspace: {
-          on: vi.fn().mockReturnValue({ id: 'test' })
-        }
-      }
-    });
-
-    const tab = new PluginSettingsTab({
-      plugin,
-      pluginSettingsComponent
-    });
-
-    tab.containerEl = activeDocument.createElement('div');
-
-    const bindSpy = vi.spyOn(tab, 'bind').mockReturnValue({ setMin: vi.fn() });
-
-    tab.displayLegacy();
-
-    const EXPECTED_BIND_COUNT = 7;
-    expect(bindSpy).toHaveBeenCalledTimes(EXPECTED_BIND_COUNT);
-    expect(bindSpy.mock.calls.map((call) => call[1])).toEqual([
-      'shouldIncludeExtension',
-      'pathDepth',
-      'shouldShowEllipsisForSkippedPathParts',
-      'shouldHighlightFileName',
-      'shouldReversePathParts',
-      'shouldDisplayParentPathOnSeparateLine',
-      'rootPaths'
+  it('should render all settings bound to the correct properties', async () => {
+    const tab = await createTab();
+    const names = getSettingNames(tab);
+    expect(names).toStrictEqual([
+      'Include extension',
+      'Path depth',
+      'Show ellipsis for skipped path parts',
+      'Highlight file name',
+      'Reverse path parts',
+      'Display parent path on separate line',
+      'Root paths'
     ]);
   });
 });
