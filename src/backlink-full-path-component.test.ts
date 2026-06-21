@@ -1,19 +1,17 @@
-import type {
-  BacklinkView,
-  ResultDomItem,
-  ResultDomResult
-} from '@obsidian-typings/obsidian-public-latest';
+import type { BacklinkView } from '@obsidian-typings/obsidian-public-latest';
 import type {
   App,
   TFile,
   WorkspaceLeaf
 } from 'obsidian';
+import type { Mock } from 'vitest';
 
 import { ViewType } from '@obsidian-typings/obsidian-public-latest/implementations';
 import { MarkdownView } from 'obsidian';
 import { castTo } from 'obsidian-dev-utils/object-utils';
 import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
 import {
+  afterEach,
   beforeEach,
   describe,
   expect,
@@ -24,17 +22,11 @@ import {
 import type { PluginSettingsComponent } from './plugin-settings-component.ts';
 
 import { BacklinkFullPathComponent } from './backlink-full-path-component.ts';
+import { ResultDomAddResultPatchComponent } from './patches/result-dom-add-result-patch-component.ts';
 import { PluginSettings } from './plugin-settings.ts';
 
-interface BacklinkDom {
-  addResult(file: TFile, result: ResultDomResult, content: string, shouldShowTitle: boolean): ResultDomItem;
-}
-
 interface ComponentInternals {
-  generateBacklinkTitle(file: TFile): HTMLDivElement;
   getBacklinkView(): Promise<BacklinkView | null>;
-  onBacklinksCorePluginEnable(): void;
-  onLayoutReady(): Promise<void>;
   patchBacklinksPane(): Promise<void>;
   refreshBacklinkPanels(): Promise<void>;
   reloadBacklinksView(): Promise<void>;
@@ -45,86 +37,232 @@ interface CorePlugin {
   instance: object;
 }
 
-interface PatchableTarget {
-  addResult?(...args: never[]): unknown;
-  onUserEnable?(...args: never[]): unknown;
-}
-
-interface PatchHandlerParams {
-  fallback(): unknown;
-  readonly originalArgs: readonly unknown[];
-}
-
-interface RegisteredCallbacksHolder {
-  registeredCallbacks: (() => void)[];
-}
-
-interface RegisterMethodPatchParams {
-  readonly methodName: 'addResult' | 'onUserEnable';
-  readonly obj: PatchableTarget;
-  patchHandler(params: PatchHandlerParams): unknown;
+interface PushBacklinkViewParams {
+  readonly file: null | TFile;
+  readonly recomputeBacklink: Mock<(backlinkFile: null | TFile) => void>;
 }
 
 interface TestContext {
   app: App;
+  backlinkLeaves: WorkspaceLeaf[];
   component: BacklinkFullPathComponent;
   getPluginById: ReturnType<typeof vi.fn>;
   markdownLeaves: WorkspaceLeaf[];
   on: ReturnType<typeof vi.fn>;
-  registeredCallbacks: (() => void)[];
-  settings: PluginSettings;
 }
 
-vi.mock('obsidian-dev-utils/async', () => ({
-  invokeAsyncSafely: vi.fn((fn: () => Promise<void>) => fn())
-}));
+describe('BacklinkFullPathComponent', () => {
+  let context: TestContext;
 
-vi.mock('obsidian-dev-utils/obsidian/components/layout-ready-component', () => ({
-  LayoutReadyComponent: class MockLayoutReadyComponent {
-    public app: App;
-    public readonly registeredCallbacks: (() => void)[] = [];
+  beforeEach(() => {
+    context = createTestContext();
+  });
 
-    public constructor(app: App) {
-      this.app = app;
-    }
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
-    public addChild(child: unknown): unknown {
-      return child;
-    }
+  describe('onLayoutReady', () => {
+    it('should register a saveSettings handler that refreshes panels', async () => {
+      context.getPluginById.mockReturnValue(undefined);
+      const refreshSpy = vi.spyOn(internals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
 
-    public register(callback: () => void): void {
-      this.registeredCallbacks.push(callback);
-    }
+      await triggerLayoutReady();
+
+      expect(context.on).toHaveBeenCalledWith('saveSettings', expect.any(Function));
+      const handler = castTo<() => Promise<void>>(context.on.mock.calls[0]?.[1]);
+      await handler();
+      expect(refreshSpy).toHaveBeenCalled();
+    });
+
+    it('should not patch the pane when the backlinks core plugin is not found', async () => {
+      context.getPluginById.mockReturnValue(undefined);
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+
+      await triggerLayoutReady();
+
+      expect(patchSpy).not.toHaveBeenCalled();
+    });
+
+    it('should add the onUserEnable patch child when the core plugin is found', async () => {
+      context.getPluginById.mockReturnValue(createCorePlugin(false));
+      vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+      const addChildSpy = vi.spyOn(context.component, 'addChild');
+
+      await triggerLayoutReady();
+
+      expect(addChildSpy).toHaveBeenCalled();
+    });
+
+    it('should patch the pane and refresh panels when the plugin is enabled', async () => {
+      context.getPluginById.mockReturnValue(createCorePlugin(true));
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+      const refreshSpy = vi.spyOn(internals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
+
+      await triggerLayoutReady();
+
+      expect(patchSpy).toHaveBeenCalled();
+      expect(refreshSpy).toHaveBeenCalled();
+    });
+
+    it('should not patch the pane when the plugin is disabled', async () => {
+      context.getPluginById.mockReturnValue(createCorePlugin(false));
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+
+      await triggerLayoutReady();
+
+      expect(patchSpy).not.toHaveBeenCalled();
+    });
+
+    it('should register an unload callback that refreshes panels', async () => {
+      context.getPluginById.mockReturnValue(createCorePlugin(false));
+      const refreshSpy = vi.spyOn(internals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
+      const registerSpy = vi.spyOn(context.component, 'register');
+
+      await triggerLayoutReady();
+
+      const unloadCallback = registerSpy.mock.calls.at(-1)?.[0];
+      unloadCallback?.();
+
+      expect(refreshSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('onBacklinksCorePluginEnable', () => {
+    it('should patch the backlinks pane', () => {
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+
+      context.component.onBacklinksCorePluginEnable();
+
+      expect(patchSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('getBacklinkView', () => {
+    it('should return null when no backlink leaf exists', async () => {
+      const view = await internals(context.component).getBacklinkView();
+      expect(view).toBeNull();
+    });
+
+    it('should load the deferred leaf and return its view', async () => {
+      const backlinkView = strictProxy<BacklinkView>({});
+      const loadIfDeferred = vi.fn().mockResolvedValue(undefined);
+      context.backlinkLeaves.push(castTo<WorkspaceLeaf>({
+        loadIfDeferred,
+        view: backlinkView
+      }));
+
+      const view = await internals(context.component).getBacklinkView();
+
+      expect(loadIfDeferred).toHaveBeenCalled();
+      expect(view).toBe(backlinkView);
+    });
+  });
+
+  describe('patchBacklinksPane', () => {
+    it('should do nothing when no backlink view exists', async () => {
+      const addChildSpy = vi.spyOn(context.component, 'addChild');
+
+      await internals(context.component).patchBacklinksPane();
+
+      expect(addChildSpy).not.toHaveBeenCalled();
+    });
+
+    it('should add a result-dom patch child when a backlink view exists', async () => {
+      const backlinkDomProto = { addResult: vi.fn() };
+      const backlinkView = strictProxy<BacklinkView>({
+        backlink: strictProxy({
+          backlinkDom: Object.create(backlinkDomProto)
+        })
+      });
+      context.backlinkLeaves.push(castTo<WorkspaceLeaf>({
+        loadIfDeferred: vi.fn().mockResolvedValue(undefined),
+        view: backlinkView
+      }));
+      const addChildSpy = vi.spyOn(context.component, 'addChild');
+
+      await internals(context.component).patchBacklinksPane();
+
+      expect(addChildSpy).toHaveBeenCalledWith(expect.any(ResultDomAddResultPatchComponent));
+    });
+  });
+
+  describe('reloadBacklinksView', () => {
+    it('should do nothing when no backlink view exists', async () => {
+      await expect(internals(context.component).reloadBacklinksView()).resolves.toBeUndefined();
+    });
+
+    it('should not recompute when the backlink view has no file', async () => {
+      const recomputeBacklink = vi.fn<(backlinkFile: null | TFile) => void>();
+      pushBacklinkView({ file: null, recomputeBacklink });
+
+      await internals(context.component).reloadBacklinksView();
+
+      expect(recomputeBacklink).not.toHaveBeenCalled();
+    });
+
+    it('should recompute when the backlink view has a file', async () => {
+      const file = createMockFile('note.md');
+      const recomputeBacklink = vi.fn<(backlinkFile: null | TFile) => void>();
+      pushBacklinkView({ file, recomputeBacklink });
+
+      await internals(context.component).reloadBacklinksView();
+
+      expect(recomputeBacklink).toHaveBeenCalledWith(file);
+    });
+  });
+
+  describe('refreshBacklinkPanels', () => {
+    beforeEach(() => {
+      vi.spyOn(internals(context.component), 'reloadBacklinksView').mockResolvedValue(undefined);
+    });
+
+    it('should skip leaves that are not MarkdownView instances', async () => {
+      context.markdownLeaves.push(castTo<WorkspaceLeaf>({ view: {} }));
+
+      await expect(internals(context.component).refreshBacklinkPanels()).resolves.toBeUndefined();
+    });
+
+    it('should skip MarkdownView leaves without backlinks', async () => {
+      context.markdownLeaves.push(createMarkdownLeaf(undefined));
+
+      await expect(internals(context.component).refreshBacklinkPanels()).resolves.toBeUndefined();
+    });
+
+    it('should recompute backlinks for MarkdownView leaves with backlinks', async () => {
+      const file = createMockFile('note.md');
+      const recomputeBacklink = vi.fn();
+      context.markdownLeaves.push(createMarkdownLeaf({ file, recomputeBacklink }));
+
+      await internals(context.component).refreshBacklinkPanels();
+
+      expect(recomputeBacklink).toHaveBeenCalledWith(file);
+    });
+  });
+
+  function pushBacklinkView(backlink: PushBacklinkViewParams): void {
+    const backlinkView = strictProxy<BacklinkView>({
+      backlink: strictProxy({ recomputeBacklink: backlink.recomputeBacklink }),
+      file: backlink.file
+    });
+    context.backlinkLeaves.push(castTo<WorkspaceLeaf>({
+      loadIfDeferred: vi.fn().mockResolvedValue(undefined),
+      view: backlinkView
+    }));
   }
-}));
 
-vi.mock('obsidian-dev-utils/obsidian/components/monkey-around-component', () => ({
-  MonkeyAroundComponent: class MockMonkeyAroundComponent {
-    public registerMethodPatch(params: RegisterMethodPatchParams): void {
-      const {
-        methodName,
-        obj,
-        patchHandler
-      } = params;
-      const originalMethod = obj[methodName];
-      obj[methodName] = function patched(this: unknown, ...originalArgs: never[]): unknown {
-        return patchHandler({
-          fallback: () => originalMethod?.apply(this, originalArgs),
-          originalArgs
-        });
-      };
-    }
+  async function triggerLayoutReady(): Promise<void> {
+    vi.useFakeTimers();
+    context.component.load();
+    await vi.runAllTimersAsync();
+    vi.useRealTimers();
   }
-}));
+});
 
-function asInternals(component: BacklinkFullPathComponent): ComponentInternals {
-  return castTo<ComponentInternals>(component);
-}
-
-function createCorePlugin(enabled: boolean, instanceProto: object = {}): CorePlugin {
+function createCorePlugin(enabled: boolean): CorePlugin {
   return {
     enabled,
-    instance: Object.create(instanceProto)
+    instance: Object.create({ onUserEnable: vi.fn() })
   };
 }
 
@@ -135,32 +273,11 @@ function createMarkdownLeaf(backlinks: unknown): WorkspaceLeaf {
 }
 
 function createMockFile(path: string): TFile {
-  const parts = path.split('/');
-  const name = parts.at(-1) ?? '';
-  const dotIndex = name.lastIndexOf('.');
-  const basename = dotIndex >= 0 ? name.slice(0, dotIndex) : name;
-  const extension = dotIndex >= 0 ? name.slice(dotIndex + 1) : '';
-  return strictProxy<TFile>({
-    basename,
-    extension,
-    name,
-    path
-  });
-}
-
-function createMockResultDomItem(hasTreeItemInner: boolean): ResultDomItem {
-  const el = activeDocument.createElement('div');
-  if (hasTreeItemInner) {
-    const inner = activeDocument.createElement('div');
-    inner.classList.add('tree-item-inner');
-    inner.textContent = 'Original';
-    el.appendChild(inner);
-  }
-  return strictProxy<ResultDomItem>({ el });
+  return strictProxy<TFile>({ path });
 }
 
 function createTestContext(): TestContext {
-  const settings = new PluginSettings();
+  const backlinkLeaves: WorkspaceLeaf[] = [];
   const markdownLeaves: WorkspaceLeaf[] = [];
   const getPluginById = vi.fn();
   const on = vi.fn();
@@ -171,17 +288,23 @@ function createTestContext(): TestContext {
     },
     workspace: {
       getLeavesOfType: vi.fn().mockImplementation((type: string) => {
+        if (type === ViewType.Backlink) {
+          return backlinkLeaves;
+        }
         if (type === ViewType.Markdown) {
           return markdownLeaves;
         }
         return [];
+      }),
+      onLayoutReady: vi.fn().mockImplementation((callback: () => void) => {
+        callback();
       })
     }
   });
 
   const pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
     on,
-    settings
+    settings: new PluginSettings()
   });
 
   const component = new BacklinkFullPathComponent({
@@ -189,377 +312,16 @@ function createTestContext(): TestContext {
     pluginSettingsComponent
   });
 
-  const registeredCallbacks = castTo<RegisteredCallbacksHolder>(component).registeredCallbacks;
-
   return {
     app,
+    backlinkLeaves,
     component,
     getPluginById,
     markdownLeaves,
-    on,
-    registeredCallbacks,
-    settings
+    on
   };
 }
 
-describe('BacklinkFullPathComponent', () => {
-  let context: TestContext;
-
-  beforeEach(() => {
-    context = createTestContext();
-  });
-
-  describe('onLayoutReady', () => {
-    it('should register a saveSettings handler that refreshes panels', async () => {
-      context.getPluginById.mockReturnValue(undefined);
-      const refreshSpy = vi.spyOn(asInternals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
-
-      await asInternals(context.component).onLayoutReady();
-
-      expect(context.on).toHaveBeenCalledWith('saveSettings', expect.any(Function));
-      const handler = context.on.mock.calls[0]?.[1] as () => Promise<void>;
-      await handler();
-      expect(refreshSpy).toHaveBeenCalled();
-    });
-
-    it('should return early when backlinks core plugin is not found', async () => {
-      context.getPluginById.mockReturnValue(undefined);
-      const patchSpy = vi.spyOn(asInternals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
-
-      await asInternals(context.component).onLayoutReady();
-
-      expect(patchSpy).not.toHaveBeenCalled();
-    });
-
-    it('should patch onUserEnable to call onBacklinksCorePluginEnable', async () => {
-      const originalOnUserEnable = vi.fn();
-      const instanceProto = { onUserEnable: originalOnUserEnable };
-      const corePlugin = createCorePlugin(false, instanceProto);
-      context.getPluginById.mockReturnValue(corePlugin);
-
-      const enableSpy = vi.spyOn(asInternals(context.component), 'onBacklinksCorePluginEnable').mockReturnValue(undefined);
-
-      await asInternals(context.component).onLayoutReady();
-
-      instanceProto.onUserEnable.call(corePlugin.instance);
-
-      expect(originalOnUserEnable).toHaveBeenCalled();
-      expect(enableSpy).toHaveBeenCalled();
-    });
-
-    it('should patch pane and refresh panels when plugin is enabled', async () => {
-      context.getPluginById.mockReturnValue(createCorePlugin(true));
-      const patchSpy = vi.spyOn(asInternals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
-      const refreshSpy = vi.spyOn(asInternals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
-
-      await asInternals(context.component).onLayoutReady();
-
-      expect(patchSpy).toHaveBeenCalled();
-      expect(refreshSpy).toHaveBeenCalled();
-    });
-
-    it('should not patch pane when plugin is disabled', async () => {
-      context.getPluginById.mockReturnValue(createCorePlugin(false));
-      const patchSpy = vi.spyOn(asInternals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
-
-      await asInternals(context.component).onLayoutReady();
-
-      expect(patchSpy).not.toHaveBeenCalled();
-    });
-
-    it('should register an unload callback that refreshes panels', async () => {
-      context.getPluginById.mockReturnValue(createCorePlugin(false));
-      const refreshSpy = vi.spyOn(asInternals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
-
-      await asInternals(context.component).onLayoutReady();
-
-      expect(context.registeredCallbacks.length).toBeGreaterThan(0);
-      const callback = context.registeredCallbacks[0];
-      callback?.();
-
-      expect(refreshSpy).toHaveBeenCalled();
-    });
-  });
-
-  describe('generateBacklinkTitle', () => {
-    function callGenerateBacklinkTitle(file: TFile): HTMLDivElement {
-      return asInternals(context.component).generateBacklinkTitle.call(context.component, file);
-    }
-
-    it('should include extension when shouldIncludeExtension is true', () => {
-      context.settings.shouldIncludeExtension = true;
-      const container = callGenerateBacklinkTitle(createMockFile('folder/note.md'));
-      const fileNameSpan = container.shadowRoot?.querySelector('[part="file-name"]');
-      expect(fileNameSpan?.textContent).toBe('note.md');
-    });
-
-    it('should exclude extension when shouldIncludeExtension is false', () => {
-      context.settings.shouldIncludeExtension = false;
-      const container = callGenerateBacklinkTitle(createMockFile('folder/note.md'));
-      const fileNameSpan = container.shadowRoot?.querySelector('[part="file-name"]');
-      expect(fileNameSpan?.textContent).toBe('note');
-    });
-
-    it('should show file at root with no parent path', () => {
-      const container = callGenerateBacklinkTitle(createMockFile('note.md'));
-      const parentPathSpan = container.shadowRoot?.querySelector('[part="parent-path"]');
-      expect(parentPathSpan).toBeNull();
-    });
-
-    it('should show parent path with trailing separator', () => {
-      context.settings.shouldReversePathParts = false;
-      context.settings.shouldDisplayParentPathOnSeparateLine = false;
-      const container = callGenerateBacklinkTitle(createMockFile('folder/note.md'));
-      const parentPathSpan = container.shadowRoot?.querySelector('[part="parent-path"]');
-      expect(parentPathSpan?.textContent).toBe('folder/');
-    });
-
-    it('should strip root path prefix', () => {
-      context.settings.rootPaths = ['folder'];
-      const container = callGenerateBacklinkTitle(createMockFile('folder/subfolder/note.md'));
-      const parentPathSpan = container.shadowRoot?.querySelector('[part="parent-path"]');
-      expect(parentPathSpan?.textContent).toBe('subfolder/');
-    });
-
-    it('should strip nested root path prefix', () => {
-      context.settings.rootPaths = ['folder/subfolder'];
-      const container = callGenerateBacklinkTitle(createMockFile('folder/subfolder/deep/note.md'));
-      const parentPathSpan = container.shadowRoot?.querySelector('[part="parent-path"]');
-      expect(parentPathSpan?.textContent).toBe('deep/');
-    });
-
-    it('should limit depth with pathDepth setting', () => {
-      context.settings.pathDepth = 2;
-      context.settings.shouldShowEllipsisForSkippedPathParts = false;
-      const container = callGenerateBacklinkTitle(createMockFile('a/b/c/note.md'));
-      const parentPathSpan = container.shadowRoot?.querySelector('[part="parent-path"]');
-      expect(parentPathSpan?.textContent).toBe('c/');
-    });
-
-    it('should add ellipsis for skipped parts when enabled', () => {
-      context.settings.pathDepth = 2;
-      context.settings.shouldShowEllipsisForSkippedPathParts = true;
-      const container = callGenerateBacklinkTitle(createMockFile('a/b/c/note.md'));
-      const parentPathSpan = container.shadowRoot?.querySelector('[part="parent-path"]');
-      expect(parentPathSpan?.textContent).toBe('.../c/');
-    });
-
-    it('should not add ellipsis when pathDepth does not truncate', () => {
-      context.settings.pathDepth = 5;
-      context.settings.shouldShowEllipsisForSkippedPathParts = true;
-      const container = callGenerateBacklinkTitle(createMockFile('a/b/note.md'));
-      const parentPathSpan = container.shadowRoot?.querySelector('[part="parent-path"]');
-      expect(parentPathSpan?.textContent).toBe('a/b/');
-    });
-
-    it('should reverse path parts when shouldReversePathParts is true', () => {
-      context.settings.shouldReversePathParts = true;
-      context.settings.shouldDisplayParentPathOnSeparateLine = false;
-      const container = callGenerateBacklinkTitle(createMockFile('a/b/note.md'));
-      const parentPathSpan = container.shadowRoot?.querySelector('[part="parent-path"]');
-      expect(parentPathSpan?.textContent).toBe(' ← b ← a');
-    });
-
-    it('should display parent path on separate line without separator', () => {
-      context.settings.shouldDisplayParentPathOnSeparateLine = true;
-      context.settings.shouldReversePathParts = false;
-      const container = callGenerateBacklinkTitle(createMockFile('folder/note.md'));
-      const parentPathSpan = container.shadowRoot?.querySelector('[part="parent-path"]');
-      expect(parentPathSpan?.textContent).toBe('folder');
-    });
-
-    it('should set dataset attributes for highlighting', () => {
-      context.settings.shouldHighlightFileName = true;
-      context.settings.shouldDisplayParentPathOnSeparateLine = false;
-      const container = callGenerateBacklinkTitle(createMockFile('note.md'));
-      expect(container.dataset['shouldHighlightFileName']).toBe('true');
-      expect(container.dataset['shouldDisplayParentPathOnSeparateLine']).toBe('false');
-    });
-
-    it('should include full-path span with file path', () => {
-      const container = callGenerateBacklinkTitle(createMockFile('folder/note.md'));
-      const fullPathSpan = container.querySelector('.full-path');
-      expect(fullPathSpan?.textContent).toBe('folder/note.md');
-    });
-
-    it('should prepend parent path when not reversed and not on separate line', () => {
-      context.settings.shouldReversePathParts = false;
-      context.settings.shouldDisplayParentPathOnSeparateLine = false;
-      const container = callGenerateBacklinkTitle(createMockFile('folder/note.md'));
-      const firstChild = container.shadowRoot?.firstElementChild;
-      expect(firstChild?.getAttribute('part')).toBe('parent-path');
-    });
-
-    it('should append parent path when reversed and not on separate line', () => {
-      context.settings.shouldReversePathParts = true;
-      context.settings.shouldDisplayParentPathOnSeparateLine = false;
-      const container = callGenerateBacklinkTitle(createMockFile('folder/note.md'));
-      const lastChild = container.shadowRoot?.lastElementChild;
-      expect(lastChild?.getAttribute('part')).toBe('parent-path');
-    });
-
-    it('should not prepend when displaying on separate line', () => {
-      context.settings.shouldReversePathParts = false;
-      context.settings.shouldDisplayParentPathOnSeparateLine = true;
-      const container = callGenerateBacklinkTitle(createMockFile('folder/note.md'));
-      const lastChild = container.shadowRoot?.lastElementChild;
-      expect(lastChild?.getAttribute('part')).toBe('parent-path');
-    });
-  });
-
-  describe('getBacklinkView', () => {
-    it('should return null when no backlink leaf exists', async () => {
-      const view = await asInternals(context.component).getBacklinkView();
-      expect(view).toBeNull();
-    });
-
-    it('should return the view when a backlink leaf exists', async () => {
-      const mockView = strictProxy<BacklinkView>({});
-      const loadIfDeferred = vi.fn().mockResolvedValue(undefined);
-      const mockLeaf = castTo<WorkspaceLeaf>({
-        loadIfDeferred,
-        view: mockView
-      });
-
-      vi.mocked(context.app.workspace.getLeavesOfType).mockImplementation((type: string) => {
-        if (type === ViewType.Backlink) {
-          return [mockLeaf];
-        }
-        return [];
-      });
-
-      const view = await asInternals(context.component).getBacklinkView();
-
-      expect(loadIfDeferred).toHaveBeenCalled();
-      expect(view).toBe(mockView);
-    });
-  });
-
-  describe('onBacklinksCorePluginEnable', () => {
-    it('should invoke patchBacklinksPane', () => {
-      const patchSpy = vi.spyOn(asInternals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
-
-      asInternals(context.component).onBacklinksCorePluginEnable();
-
-      expect(patchSpy).toHaveBeenCalled();
-    });
-  });
-
-  describe('patchBacklinksPane', () => {
-    it('should return early when no backlink view exists', async () => {
-      const getViewSpy = vi.spyOn(asInternals(context.component), 'getBacklinkView').mockResolvedValue(null);
-
-      await asInternals(context.component).patchBacklinksPane();
-
-      expect(getViewSpy).toHaveBeenCalled();
-    });
-
-    it('should patch addResult to replace tree-item-inner with generated title', async () => {
-      const originalAddResult = vi.fn().mockImplementation(() => createMockResultDomItem(true));
-      const backlinkDomProto: BacklinkDom = { addResult: originalAddResult };
-      const backlinkView = strictProxy<BacklinkView>({
-        backlink: strictProxy({
-          backlinkDom: Object.create(backlinkDomProto)
-        })
-      });
-      vi.spyOn(asInternals(context.component), 'getBacklinkView').mockResolvedValue(backlinkView);
-
-      await asInternals(context.component).patchBacklinksPane();
-
-      const file = createMockFile('folder/note.md');
-      const result = strictProxy<ResultDomResult>({});
-      const item = backlinkDomProto.addResult(file, result, 'content', true);
-
-      const inner = item.el.querySelector('.tree-item-inner');
-      expect(inner?.textContent).not.toBe('Original');
-    });
-
-    it('should leave result unchanged when tree-item-inner is absent', async () => {
-      const originalAddResult = vi.fn().mockImplementation(() => createMockResultDomItem(false));
-      const backlinkDomProto: BacklinkDom = { addResult: originalAddResult };
-      const backlinkView = strictProxy<BacklinkView>({
-        backlink: strictProxy({
-          backlinkDom: Object.create(backlinkDomProto)
-        })
-      });
-      vi.spyOn(asInternals(context.component), 'getBacklinkView').mockResolvedValue(backlinkView);
-
-      await asInternals(context.component).patchBacklinksPane();
-
-      const file = createMockFile('note.md');
-      const result = strictProxy<ResultDomResult>({});
-      const item = backlinkDomProto.addResult(file, result, 'content', true);
-
-      expect(item.el.querySelector('.tree-item-inner')).toBeNull();
-    });
-  });
-
-  describe('reloadBacklinksView', () => {
-    it('should do nothing when no backlink view exists', async () => {
-      const getViewSpy = vi.spyOn(asInternals(context.component), 'getBacklinkView').mockResolvedValue(null);
-
-      await asInternals(context.component).reloadBacklinksView();
-
-      expect(getViewSpy).toHaveBeenCalled();
-    });
-
-    it('should not recompute when backlink view has no file', async () => {
-      const recomputeBacklink = vi.fn();
-      const backlinkView = strictProxy<BacklinkView>({
-        backlink: strictProxy({ recomputeBacklink }),
-        file: null
-      });
-      vi.spyOn(asInternals(context.component), 'getBacklinkView').mockResolvedValue(backlinkView);
-
-      await asInternals(context.component).reloadBacklinksView();
-
-      expect(recomputeBacklink).not.toHaveBeenCalled();
-    });
-
-    it('should recompute when backlink view has a file', async () => {
-      const mockFile = createMockFile('note.md');
-      const recomputeBacklink = vi.fn();
-      const backlinkView = strictProxy<BacklinkView>({
-        backlink: strictProxy({ recomputeBacklink }),
-        file: mockFile
-      });
-      vi.spyOn(asInternals(context.component), 'getBacklinkView').mockResolvedValue(backlinkView);
-
-      await asInternals(context.component).reloadBacklinksView();
-
-      expect(recomputeBacklink).toHaveBeenCalledWith(mockFile);
-    });
-  });
-
-  describe('refreshBacklinkPanels', () => {
-    beforeEach(() => {
-      vi.spyOn(asInternals(context.component), 'reloadBacklinksView').mockResolvedValue(undefined);
-    });
-
-    it('should skip leaves that are not MarkdownView instances', async () => {
-      context.markdownLeaves.push(castTo<WorkspaceLeaf>({ view: {} }));
-
-      await asInternals(context.component).refreshBacklinkPanels();
-
-      expect(asInternals(context.component).reloadBacklinksView).toHaveBeenCalled();
-    });
-
-    it('should skip MarkdownView leaves without backlinks', async () => {
-      context.markdownLeaves.push(createMarkdownLeaf(undefined));
-
-      await asInternals(context.component).refreshBacklinkPanels();
-
-      expect(asInternals(context.component).reloadBacklinksView).toHaveBeenCalled();
-    });
-
-    it('should recompute backlinks for MarkdownView leaves with backlinks', async () => {
-      const mockFile = createMockFile('test2.md');
-      const recomputeBacklink = vi.fn();
-      context.markdownLeaves.push(createMarkdownLeaf({ file: mockFile, recomputeBacklink }));
-
-      await asInternals(context.component).refreshBacklinkPanels();
-
-      expect(recomputeBacklink).toHaveBeenCalledWith(mockFile);
-    });
-  });
-});
+function internals(component: BacklinkFullPathComponent): ComponentInternals {
+  return castTo<ComponentInternals>(component);
+}
