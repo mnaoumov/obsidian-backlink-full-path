@@ -1,90 +1,124 @@
+/* eslint-disable @typescript-eslint/no-extraneous-class -- Test mocks of the plugin's own sibling modules need constructor-only classes. */
 import type {
-  App,
+  App as AppOriginal,
   PluginManifest
 } from 'obsidian';
 
+import { Component } from 'obsidian';
 import { castTo } from 'obsidian-dev-utils/object-utils';
-import { strictProxy } from 'obsidian-dev-utils/strict-proxy';
+import { App } from 'obsidian-test-mocks/obsidian';
 import {
+  beforeEach,
   describe,
   expect,
   it,
   vi
 } from 'vitest';
 
-import { BacklinkFullPathComponent } from './backlink-full-path-component.ts';
-import { PluginSettingsComponent } from './plugin-settings-component.ts';
-import { PluginSettingsTab } from './plugin-settings-tab.ts';
-import { Plugin } from './plugin.ts';
+interface AppGlobal {
+  app: AppOriginal;
+}
 
-vi.mock('obsidian-dev-utils/obsidian/components/plugin-settings-tab-component', () => ({
-  PluginSettingsTabComponent: vi.fn()
-}));
+interface SettingTabsHolder {
+  settingTabs__: unknown[];
+}
 
-vi.mock('obsidian-dev-utils/obsidian/data-handler', () => ({
-  PluginDataHandler: vi.fn()
-}));
+const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
 
-vi.mock('obsidian-dev-utils/obsidian/plugin/plugin', () => {
-  class MockPluginBase {
-    public app: App;
-    public manifest: PluginManifest;
+// --- Mocks for the plugin's OWN sibling modules (allowed: not obsidian-dev-utils / obsidian-test-mocks) ---
 
-    public constructor(app: App, manifest: PluginManifest) {
-      this.app = app;
-      this.manifest = manifest;
-    }
-
-    public addChild(child: unknown): unknown {
-      return child;
-    }
-  }
-  return { PluginBase: MockPluginBase };
-});
-
-vi.mock('obsidian-dev-utils/obsidian/plugin/plugin-event-source', () => ({
-  PluginEventSourceImpl: vi.fn()
-}));
-
-vi.mock('./backlink-full-path-component.ts', () => ({
-  BacklinkFullPathComponent: vi.fn()
+const hoisted = vi.hoisted(() => ({
+  backlinkFullPathComponentConstructor: vi.fn(),
+  pluginSettingsComponentConstructor: vi.fn(),
+  pluginSettingsTabConstructor: vi.fn()
 }));
 
 vi.mock('./plugin-settings-component.ts', () => ({
-  PluginSettingsComponent: vi.fn()
+  // Extends the real obsidian-test-mocks Component so the real addChild lifecycle can load it.
+  PluginSettingsComponent: class extends Component {
+    public constructor(params: unknown) {
+      super();
+      hoisted.pluginSettingsComponentConstructor(params);
+    }
+  }
 }));
 
 vi.mock('./plugin-settings-tab.ts', () => ({
-  PluginSettingsTab: vi.fn()
+  PluginSettingsTab: class {
+    public constructor(params: unknown) {
+      hoisted.pluginSettingsTabConstructor(params);
+    }
+  }
 }));
 
-interface PluginInternals {
-  onloadImpl(): void;
+vi.mock('./backlink-full-path-component.ts', () => ({
+  // Extends the real obsidian-test-mocks Component so the real addChild lifecycle can load it.
+  BacklinkFullPathComponent: class extends Component {
+    public constructor(params: unknown) {
+      super();
+      hoisted.backlinkFullPathComponentConstructor(params);
+    }
+  }
+}));
+
+// eslint-disable-next-line import-x/first, import-x/imports-first -- vi.mock must precede imports.
+import { Plugin } from './plugin.ts';
+
+const manifest = castTo<PluginManifest>({
+  author: 'test',
+  description: 'test',
+  id: 'backlink-full-path',
+  minAppVersion: '1.0.0',
+  name: 'Backlink Full Path',
+  version: '1.0.0'
+});
+
+let app: AppOriginal;
+
+async function createLoadedPlugin(): Promise<Plugin> {
+  const plugin = new Plugin(app, manifest);
+  // PluginBase.onload is async, and the synchronous mock Component.load() would not await it, so the real async load path is driven directly (as the obsidian-dev-utils reference test does).
+  await plugin.onload();
+  return plugin;
 }
 
-function createMockApp(): App {
-  return strictProxy<App>({});
-}
-
-function createMockManifest(): PluginManifest {
-  return strictProxy<PluginManifest>({
-    id: 'backlink-full-path',
-    name: 'Backlink Full Path'
-  });
+function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknown): void {
+  const proxyWithTarget = castTo<Partial<Record<symbol, object>>>(strictProxiedObject);
+  const rawTarget = proxyWithTarget[STRICT_PROXY_TARGET_SYMBOL] ?? strictProxiedObject;
+  castTo<Record<string, unknown>>(rawTarget)[key] = value;
 }
 
 describe('Plugin', () => {
-  it('should wire up all components in onloadImpl', () => {
-    const app = createMockApp();
-    const plugin = new Plugin(app, createMockManifest());
-    const addChildSpy = vi.spyOn(plugin, 'addChild');
+  beforeEach(() => {
+    vi.clearAllMocks();
+    const appMock = App.createConfigured__();
+    appMock.workspace.onLayoutReady = vi.fn((cb: () => void) => {
+      cb();
+    });
+    app = appMock.asOriginalType__();
 
-    castTo<PluginInternals>(plugin).onloadImpl();
+    // Seed the obsidianDevUtilsState holder on the raw target behind the strict-proxy App so the real getObsidianDevUtilsState can read/write it (the proxy throws on first access to an unassigned property).
+    seedOnRawTarget(app, 'obsidianDevUtilsState', {});
 
-    expect(PluginSettingsComponent).toHaveBeenCalledOnce();
-    expect(PluginSettingsTab).toHaveBeenCalledOnce();
-    expect(BacklinkFullPathComponent).toHaveBeenCalledOnce();
-    const EXPECTED_ADD_CHILD_COUNT = 3;
-    expect(addChildSpy).toHaveBeenCalledTimes(EXPECTED_ADD_CHILD_COUNT);
+    // Expose the app as the global instance so dev-utils helpers that resolve shared state without an explicit app argument read/write the same seeded holder.
+    castTo<AppGlobal>(window).app = app;
+  });
+
+  it('should load the plugin without throwing', async () => {
+    const plugin = await createLoadedPlugin();
+    expect(plugin).toBeInstanceOf(Plugin);
+  });
+
+  it('should wire up all components in onloadImpl', async () => {
+    await createLoadedPlugin();
+    expect(hoisted.pluginSettingsComponentConstructor).toHaveBeenCalledOnce();
+    expect(hoisted.pluginSettingsTabConstructor).toHaveBeenCalledOnce();
+    expect(hoisted.backlinkFullPathComponentConstructor).toHaveBeenCalledOnce();
+  });
+
+  it('should register the settings tab with the plugin', async () => {
+    const plugin = await createLoadedPlugin();
+    expect(castTo<SettingTabsHolder>(plugin).settingTabs__).toHaveLength(1);
   });
 });
+/* eslint-enable @typescript-eslint/no-extraneous-class -- End of test file. */
