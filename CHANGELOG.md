@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 1.6.6
+
+- test: restore component tests to real dev-utils base classes
+- refactor: monkey around
+
 ## 1.6.5
 
 - docs: remove resolved file-protocol
