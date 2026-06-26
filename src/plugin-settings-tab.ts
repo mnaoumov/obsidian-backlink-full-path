@@ -13,7 +13,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       .setName('Include extension')
       .setDesc('Whether to include file extension in backlinks.')
       .addToggle((toggle) => {
-        this.bind(toggle, 'shouldIncludeExtension');
+        this.bind({ propertyName: 'shouldIncludeExtension', valueComponent: toggle });
       });
 
     new SettingEx(this.containerEl)
@@ -42,7 +42,7 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         f.appendText(' - for unlimited depth.');
       }))
       .addNumber((numberComponent) => {
-        this.bind(numberComponent, 'pathDepth')
+        this.bind({ propertyName: 'pathDepth', valueComponent: numberComponent })
           .setMin(0);
       });
 
@@ -60,14 +60,14 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         f.appendText('.');
       }))
       .addToggle((toggle) => {
-        this.bind(toggle, 'shouldShowEllipsisForSkippedPathParts');
+        this.bind({ propertyName: 'shouldShowEllipsisForSkippedPathParts', valueComponent: toggle });
       });
 
     new Setting(this.containerEl)
       .setName('Highlight file name')
       .setDesc('Whether to highlight the file name.')
       .addToggle((toggle) => {
-        this.bind(toggle, 'shouldHighlightFileName');
+        this.bind({ propertyName: 'shouldHighlightFileName', valueComponent: toggle });
       });
 
     new Setting(this.containerEl)
@@ -83,21 +83,21 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         f.appendText('.');
       }))
       .addToggle((toggle) => {
-        this.bind(toggle, 'shouldReversePathParts');
+        this.bind({ propertyName: 'shouldReversePathParts', valueComponent: toggle });
       });
 
     new Setting(this.containerEl)
       .setName('Display parent path on separate line')
       .setDesc('Whether to display the parent path on a separate line.')
       .addToggle((toggle) => {
-        this.bind(toggle, 'shouldDisplayParentPathOnSeparateLine');
+        this.bind({ propertyName: 'shouldDisplayParentPathOnSeparateLine', valueComponent: toggle });
       });
 
     new SettingEx(this.containerEl)
       .setName('Root paths')
       .setDesc('The paths to be treated as root paths.')
       .addMultipleText((multipleText) => {
-        this.bind(multipleText, 'rootPaths');
+        this.bind({ propertyName: 'rootPaths', valueComponent: multipleText });
       });
   }
 }
