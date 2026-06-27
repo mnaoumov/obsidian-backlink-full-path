@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.6.7
+
+- refactor: new template
+
 ## 1.6.6
 
 - test: restore component tests to real dev-utils base classes
