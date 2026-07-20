@@ -120,5 +120,12 @@ describe('Plugin', () => {
     const plugin = await createLoadedPlugin();
     expect(castTo<SettingTabsHolder>(plugin).settingTabs__).toHaveLength(1);
   });
+
+  it('should register the open demo vault command', async () => {
+    const plugin = new Plugin(app, manifest);
+    const addCommandSpy = vi.spyOn(plugin, 'addCommand');
+    await plugin.onload();
+    expect(addCommandSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 'open-demo-vault' }));
+  });
 });
 /* eslint-enable @typescript-eslint/no-extraneous-class -- End of test file. */
