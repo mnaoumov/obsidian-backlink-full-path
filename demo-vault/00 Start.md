@@ -2,16 +2,7 @@ Welcome to the [Backlink Full Path](https://github.com/mnaoumov/obsidian-backlin
 
 **How to see it:** open [[Shared topic]], then open the **Backlinks** pane (the link icon in the right sidebar, or the "Backlinks" view). Three notes all named `Meeting` link here - with the plugin enabled, each backlink shows its full folder path.
 
-> [!TIP] Interactive buttons
->
-> The two setup notes have **Run** buttons, powered by [`CodeScript Toolkit`](https://github.com/mnaoumov/obsidian-codescript-toolkit/), which this vault installs for you automatically on first open (see [[CodeScript Toolkit prerequisite]]). The feature itself is just the Backlinks pane, so the feature notes have no buttons.
-
 ## Feature
 
 - [[01 Backlink full path]]
 - [[02 Settings]]
-
-## Setup
-
-- [[Code buttons check]]
-- [[CodeScript Toolkit prerequisite]]
