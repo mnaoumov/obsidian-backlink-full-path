@@ -4,7 +4,7 @@ Welcome to the [Backlink Full Path](https://github.com/mnaoumov/obsidian-backlin
 
 > [!TIP] Interactive buttons
 >
-> The two setup notes have **Run** buttons, powered by [`CodeScript Toolkit`](https://github.com/mnaoumov/obsidian-codescript-toolkit/), which this vault installs for you automatically on first open (see [[04 CodeScript Toolkit prerequisite]]). The feature itself is just the Backlinks pane, so the feature notes have no buttons.
+> The two setup notes have **Run** buttons, powered by [`CodeScript Toolkit`](https://github.com/mnaoumov/obsidian-codescript-toolkit/), which this vault installs for you automatically on first open (see [[CodeScript Toolkit prerequisite]]). The feature itself is just the Backlinks pane, so the feature notes have no buttons.
 
 ## Feature
 
@@ -13,5 +13,5 @@ Welcome to the [Backlink Full Path](https://github.com/mnaoumov/obsidian-backlin
 
 ## Setup
 
-- [[03 Code buttons check]]
-- [[04 CodeScript Toolkit prerequisite]]
+- [[Code buttons check]]
+- [[CodeScript Toolkit prerequisite]]
