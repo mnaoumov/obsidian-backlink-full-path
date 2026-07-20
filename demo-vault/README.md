@@ -1,9 +1,8 @@
-# Backlink Full Path demo vault
+This is an [Obsidian](https://obsidian.md/) vault demonstrating features of the [Backlink Full Path](https://github.com/mnaoumov/obsidian-backlink-full-path) plugin.
 
-A small Obsidian vault that demonstrates the [Backlink Full Path](https://github.com/mnaoumov/obsidian-backlink-full-path) plugin - it adds each source note's folder path to the core **Backlinks** pane so notes that share a name are no longer indistinguishable.
+## Opening this vault
 
-Open [00 Start](<./00 Start.md>), then open [Shared topic](<./Shared topic.md>) and look at its Backlinks pane: three notes all named `Meeting` link to it, each shown with its full path.
+- **If you already have the plugin installed**, run the **Backlink Full Path: Open demo vault** command — it downloads and opens the latest demo vault automatically.
+- **Otherwise**, download `backlink-full-path.demo-vault.zip` from the [plugin releases](https://github.com/mnaoumov/obsidian-backlink-full-path/releases), unzip it, and in Obsidian choose `Manage vaults...` → `Open folder as vault` → select the unzipped folder.
 
-## First open
-
-The first time you open this vault, Obsidian treats it as **untrusted**, so the bundled plugins are listed but not loaded until you **Trust author and enable plugins** and reload. After that, the Demo Vault Helper opens the start note for you.
+On first open, Obsidian treats the vault as untrusted — choose **Trust author and enable plugins** (or enable Community plugins manually), then open [00 Start](<./00 Start.md>).
