@@ -15,4 +15,4 @@ Without this plugin, the Backlinks pane lists three identical `Meeting` entries.
 1. Open [[Shared topic]].
 2. Open the **Backlinks** pane (right sidebar link icon, or the command **Backlinks: Show backlinks**).
 3. Notice each backlink now carries its full path.
-4. Head to [[Settings]] and tweak how the path is rendered - depth, highlighting, extension, ordering, and more.
+4. Head to [[02 Settings]] and tweak how the path is rendered - depth, highlighting, extension, ordering, and more.
