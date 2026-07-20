@@ -17,6 +17,14 @@ This plugin shows the full name helping to identify the backlinks better
 
 ![Full path](./images/full-path.png)
 
+## Demo vault
+
+A demo vault with usage examples ships with every release. You can access it via any of the following:
+
+1. Running the **Backlink Full Path: Open demo vault** command.
+2. Downloading `backlink-full-path.demo-vault.zip` from the [Releases](https://github.com/mnaoumov/obsidian-backlink-full-path/releases).
+3. Browsing its source in [`demo-vault/`](./demo-vault/README.md) in this repository.
+
 ## Installation
 
 The plugin is available in [the official Community Plugins repository](https://obsidian.md/plugins?id=backlink-full-path).
