@@ -169,10 +169,10 @@ describe('BacklinkFullPathComponent', () => {
     });
 
     it('should add a result-dom patch child when a backlink view exists', async () => {
-      const backlinkDomProto = { addResult: vi.fn() };
+      const backlinkDomPrototype = { addResult: vi.fn() };
       const backlinkView = strictProxy<BacklinkView>({
         backlink: strictProxy({
-          backlinkDom: Object.create(backlinkDomProto)
+          backlinkDom: Object.create(backlinkDomPrototype)
         })
       });
       context.backlinkLeaves.push(castTo<WorkspaceLeaf>({
@@ -259,9 +259,9 @@ describe('BacklinkFullPathComponent', () => {
   }
 });
 
-function createCorePlugin(enabled: boolean): CorePlugin {
+function createCorePlugin(isEnabled: boolean): CorePlugin {
   return {
-    enabled,
+    enabled: isEnabled,
     instance: Object.create({ onUserEnable: vi.fn() })
   };
 }

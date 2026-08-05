@@ -74,9 +74,9 @@ function renderSettings(tab: PluginSettingsTab): void {
 
 beforeAll(() => {
   // Obsidian-dev-utils' bind() probes setPlaceholderValue to detect text-based components.
-  for (const proto of [ToggleComponentClass.prototype, DropdownComponentClass.prototype, TextComponentClass.prototype]) {
-    if (!('setPlaceholderValue' in proto)) {
-      Object.defineProperty(proto, 'setPlaceholderValue', { value: undefined });
+  for (const prototype of [ToggleComponentClass.prototype, DropdownComponentClass.prototype, TextComponentClass.prototype]) {
+    if (!('setPlaceholderValue' in prototype)) {
+      Object.defineProperty(prototype, 'setPlaceholderValue', { value: undefined });
     }
   }
 });

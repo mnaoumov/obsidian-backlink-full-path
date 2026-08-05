@@ -15,7 +15,7 @@ import type { BacklinkFullPathComponent } from '../backlink-full-path-component.
 
 import { BacklinkPluginInstanceOnUserEnablePatchComponent } from './backlink-plugin-instance-on-user-enable-patch-component.ts';
 
-interface BacklinkPluginInstanceProto {
+interface BacklinkPluginInstancePrototype {
   onUserEnable(): void;
 }
 
@@ -23,7 +23,7 @@ describe('BacklinkPluginInstanceOnUserEnablePatchComponent', () => {
   let onBacklinksCorePluginEnable: Mock<() => void>;
   let backlinkFullPathComponent: BacklinkFullPathComponent;
   let originalOnUserEnable: Mock<() => void>;
-  let instanceProto: BacklinkPluginInstanceProto;
+  let instancePrototype: BacklinkPluginInstancePrototype;
   let backlinkPluginInstance: BacklinkPluginInstance;
 
   beforeEach(() => {
@@ -32,8 +32,8 @@ describe('BacklinkPluginInstanceOnUserEnablePatchComponent', () => {
       onBacklinksCorePluginEnable
     });
     originalOnUserEnable = vi.fn<() => void>();
-    instanceProto = { onUserEnable: originalOnUserEnable };
-    backlinkPluginInstance = castTo<BacklinkPluginInstance>(Object.create(instanceProto));
+    instancePrototype = { onUserEnable: originalOnUserEnable };
+    backlinkPluginInstance = castTo<BacklinkPluginInstance>(Object.create(instancePrototype));
   });
 
   function createComponent(): BacklinkPluginInstanceOnUserEnablePatchComponent {
@@ -56,7 +56,7 @@ describe('BacklinkPluginInstanceOnUserEnablePatchComponent', () => {
     const component = createComponent();
     component.load();
 
-    instanceProto.onUserEnable.call(backlinkPluginInstance);
+    instancePrototype.onUserEnable.call(backlinkPluginInstance);
 
     expect(originalOnUserEnable).toHaveBeenCalled();
     expect(onBacklinksCorePluginEnable).toHaveBeenCalled();
@@ -67,7 +67,7 @@ describe('BacklinkPluginInstanceOnUserEnablePatchComponent', () => {
     component.load();
     component.unload();
 
-    instanceProto.onUserEnable.call(backlinkPluginInstance);
+    instancePrototype.onUserEnable.call(backlinkPluginInstance);
 
     expect(originalOnUserEnable).toHaveBeenCalled();
     expect(onBacklinksCorePluginEnable).not.toHaveBeenCalled();

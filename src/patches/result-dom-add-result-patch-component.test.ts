@@ -20,14 +20,14 @@ import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 import { PluginSettings } from '../plugin-settings.ts';
 import { ResultDomAddResultPatchComponent } from './result-dom-add-result-patch-component.ts';
 
-interface ResultDomProto {
+interface ResultDomPrototype {
   addResult(file: TFile, result: ResultDomResult, content: string, shouldShowTitle: boolean): ResultDomItem;
 }
 
 describe('ResultDomAddResultPatchComponent', () => {
   let settings: PluginSettings;
   let pluginSettingsComponent: PluginSettingsComponent;
-  let resultDomProto: ResultDomProto;
+  let resultDomPrototype: ResultDomPrototype;
   let resultDom: ResultDom;
 
   beforeEach(() => {
@@ -35,10 +35,10 @@ describe('ResultDomAddResultPatchComponent', () => {
     pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
       settings
     });
-    resultDomProto = {
+    resultDomPrototype = {
       addResult: vi.fn().mockImplementation(() => createOriginalItem(true))
     };
-    resultDom = castTo<ResultDom>(Object.create(resultDomProto));
+    resultDom = castTo<ResultDom>(Object.create(resultDomPrototype));
   });
 
   it('should register a single method patch on load', () => {
@@ -51,11 +51,11 @@ describe('ResultDomAddResultPatchComponent', () => {
   });
 
   it('should leave the result untouched when there is no tree-item-inner', () => {
-    resultDomProto.addResult = vi.fn().mockImplementation(() => createOriginalItem(false));
+    resultDomPrototype.addResult = vi.fn().mockImplementation(() => createOriginalItem(false));
     const component = createComponent();
     component.load();
 
-    const item = resultDomProto.addResult(createMockFile('note.md'), strictProxy<ResultDomResult>({}), 'content', true);
+    const item = resultDomPrototype.addResult(createMockFile('note.md'), strictProxy<ResultDomResult>({}), 'content', true);
 
     expect(item.el.querySelector('.tree-item-inner')).toBeNull();
   });
@@ -65,7 +65,7 @@ describe('ResultDomAddResultPatchComponent', () => {
     component.load();
     component.unload();
 
-    const item = resultDomProto.addResult(createMockFile('note.md'), strictProxy<ResultDomResult>({}), 'content', true);
+    const item = resultDomPrototype.addResult(createMockFile('note.md'), strictProxy<ResultDomResult>({}), 'content', true);
 
     expect(item.el.querySelector('.tree-item-inner')?.textContent).toBe('Original');
   });
@@ -193,11 +193,11 @@ describe('ResultDomAddResultPatchComponent', () => {
     const component = createComponent();
     component.load();
 
-    const item = resultDomProto.addResult(createMockFile(filePath), strictProxy<ResultDomResult>({}), 'content', true);
+    const item = resultDomPrototype.addResult(createMockFile(filePath), strictProxy<ResultDomResult>({}), 'content', true);
     const inner = item.el.querySelector('.tree-item-inner');
     const container = inner?.firstElementChild;
     if (!(container instanceof HTMLDivElement)) {
-      throw new Error('Expected a generated backlink-full-path container');
+      throw new TypeError('Expected a generated backlink-full-path container');
     }
     return container;
   }
@@ -207,8 +207,8 @@ function createMockFile(path: string): TFile {
   const parts = path.split('/');
   const name = parts.at(-1) ?? '';
   const dotIndex = name.lastIndexOf('.');
-  const basename = dotIndex >= 0 ? name.slice(0, dotIndex) : name;
-  const extension = dotIndex >= 0 ? name.slice(dotIndex + 1) : '';
+  const basename = dotIndex === -1 ? name : name.slice(0, dotIndex);
+  const extension = dotIndex === -1 ? '' : name.slice(dotIndex + 1);
   return strictProxy<TFile>({
     basename,
     extension,
@@ -227,5 +227,5 @@ function createOriginalItem(hasTreeItemInner: boolean): ResultDomItem {
 }
 
 function getPart(container: HTMLDivElement, part: string): Element | null {
-  return container.shadowRoot?.querySelector(`[part="${part}"]`) ?? null;
+  return container.shadowRoot?.querySelector(`[part="${CSS.escape(part)}"]`) ?? null;
 }
