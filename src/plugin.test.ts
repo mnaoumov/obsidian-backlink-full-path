@@ -92,8 +92,8 @@ describe('Plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     const appMock = App.createConfigured__();
-    appMock.workspace.onLayoutReady = vi.fn((cb: () => void) => {
-      cb();
+    appMock.workspace.onLayoutReady = vi.fn((callback: () => void) => {
+      callback();
     });
     app = appMock.asOriginalType__();
 

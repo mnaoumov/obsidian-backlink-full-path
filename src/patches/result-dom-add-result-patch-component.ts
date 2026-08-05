@@ -26,17 +26,17 @@ export class ResultDomAddResultPatchComponent extends MonkeyAroundComponent {
 
   public override onload(): void {
     this.registerMethodPatch({
+      $object: getPrototypeOf(this.resultDom),
       methodName: 'addResult',
-      obj: getPrototypeOf(this.resultDom),
       patchHandler: ({
         fallback,
-        originalArgs: [file]
+        originalArguments: [file]
       }) => {
         const resultDomItem = fallback();
         const fileNameCaptionEl = resultDomItem.el.querySelector('.tree-item-inner');
         if (fileNameCaptionEl) {
           fileNameCaptionEl.empty();
-          fileNameCaptionEl.appendChild(this.generateBacklinkTitle(file));
+          fileNameCaptionEl.append(this.generateBacklinkTitle(file));
         }
         return resultDomItem;
       }
@@ -70,8 +70,8 @@ export class ResultDomAddResultPatchComponent extends MonkeyAroundComponent {
       parentPathParts.reverse();
     }
 
-    const pathSeparator = this.pluginSettingsComponent.settings.shouldReversePathParts ? ' \u2190 ' : '/';
-    const parentStr = parentPathParts.join(pathSeparator);
+    const pathSeparator = this.pluginSettingsComponent.settings.shouldReversePathParts ? ' \u{2190} ' : '/';
+    const parentString = parentPathParts.join(pathSeparator);
 
     const container = createDiv({
       cls: ['backlink-full-path', 'backlink-control']
@@ -91,8 +91,8 @@ export class ResultDomAddResultPatchComponent extends MonkeyAroundComponent {
       text: fileNamePart
     });
 
-    if (parentStr) {
-      let text = parentStr;
+    if (parentString) {
+      let text = parentString;
       if (!this.pluginSettingsComponent.settings.shouldDisplayParentPathOnSeparateLine) {
         text = this.pluginSettingsComponent.settings.shouldReversePathParts ? pathSeparator + text : text + pathSeparator;
       }
