@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.7.1
+
+- chore: update libs
+- chore: update libs
+- chore(vitest): adopt the shared Obsidian plugin vitest configuration
+
 ## 1.7.0
 
 - refactor(settings): move the settings tab onto the declarative settings API
