@@ -1,5 +1,3 @@
-[Docs](https://github.com/mnaoumov/obsidian-backlink-full-path/)
-
 # Settings
 
 Open **Settings -> Community plugins -> Backlink Full Path** to configure the pane. Each option below lists the setting key stored in the plugin's `data.json`.
@@ -17,4 +15,4 @@ Open **Settings -> Community plugins -> Backlink Full Path** to configure the pa
 - `shouldIncludeExtension` - keep the `.md` (or other) extension in the shown name.
 - `shouldDisplayParentPathOnSeparateLine` - put the folder path on its own line above the file name.
 
-Change any of these and watch the Backlinks pane of [[Shared topic]] update live.
+Change any of these and watch the Backlinks pane of [Shared topic](<./Shared topic.md>) update live.

@@ -1,3 +1,5 @@
+# Backlink Full Path demo vault
+
 This is an [Obsidian](https://obsidian.md/) vault demonstrating features of the [Backlink Full Path](https://github.com/mnaoumov/obsidian-backlink-full-path) plugin.
 
 ## Opening this vault
