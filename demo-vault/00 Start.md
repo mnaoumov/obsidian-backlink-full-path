@@ -1,8 +1,10 @@
+# Start here
+
 Welcome to the [Backlink Full Path](https://github.com/mnaoumov/obsidian-backlink-full-path/) demo vault. Obsidian's core **Backlinks** pane shows only each linking note's file name - so several notes that share a name (three different `Meeting` notes, say) look identical. **Backlink Full Path** adds each note's folder path to that pane so you can tell them apart, with plenty of options for how the path is shown.
 
-**How to see it:** open [[Shared topic]], then open the **Backlinks** pane (the link icon in the right sidebar, or the "Backlinks" view). Three notes all named `Meeting` link here - with the plugin enabled, each backlink shows its full folder path.
+**How to see it:** open [Shared topic](<./Shared topic.md>), then open the **Backlinks** pane (the link icon in the right sidebar, or the "Backlinks" view). Three notes all named `Meeting` link here - with the plugin enabled, each backlink shows its full folder path.
 
 ## Feature
 
-- [[01 Backlink full path]]
-- [[02 Settings]]
+- [01 Backlink full path](<./01 Backlink full path.md>)
+- [02 Settings](<./02 Settings.md>)
