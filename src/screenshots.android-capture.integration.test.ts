@@ -11,24 +11,18 @@
  * rather than beside it, which is exactly why the mobile set is worth taking
  * rather than reusing the desktop images.
  *
- * The image size is the DEVICE's, not a requested one: there is no mobile
- * equivalent of the desktop viewport override. So this runs on a dedicated
- * `obsidian_screenshots` AVD built at exactly 900x1600 (density 320, a phone
- * sized 450x800 dp), configured in `scripts/vitest-config.ts`, and captures its
- * framebuffer natively — no crop, no rescale. The shared `obsidian_test` AVD is
- * a Pixel 10 Pro XL at 1344x2992 (~9:20) and cannot produce the store's size.
+ * There is no mobile equivalent of the desktop viewport override, so the capture
+ * is always the device's own framebuffer — 1344x2992 on the shared
+ * `obsidian_test` AVD, roughly 9:20 against the store's 9:16. Rather than crop
+ * away a fifth of the frame or stretch it, each shot is composed onto the
+ * store's canvas by `fitScreenshotToCanvas`: scaled to 718x1600, centred, with
+ * the 91px margins either side filled by a blurred copy of the same frame.
  *
- * Resizing the shared AVD at runtime with `adb shell wm size` was tried first
- * and does NOT work: the display change is an Android configuration change that
- * recreates the activity, which destroys the WebView the Appium session is
- * attached to — every later call dies with `no such window: target window
- * already closed`. The device has to be the right size before the session is
- * established, which means a separate AVD.
- *
- * That AVD needs provisioning by hand ONCE; see [[T461-P21]] for the exact
- * steps. The harness never installs the Obsidian APK, and — because it launches
- * emulators with `-no-snapshot-save` — an install performed under that flag is
- * silently discarded.
+ * Two alternatives were tried and rejected. A dedicated 900x1600 AVD reaches
+ * Appium but Obsidian's layout never becomes ready on it. Resizing the shared
+ * AVD with `adb shell wm size` is an Android configuration change that recreates
+ * the activity, destroying the WebView the Appium session is attached to — every
+ * later call dies with `no such window: target window already closed`.
  */
 
 import {
@@ -41,6 +35,7 @@ import {
   buildDemoVaultPopulate,
   captureObsidianScreenshot,
   evalInObsidian,
+  fitScreenshotToCanvas,
   readPngDimensions
 } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
@@ -238,22 +233,29 @@ async function setSettings(settings: Record<string, boolean | number>): Promise<
 }
 
 /**
- * Captures the device screen and writes it as
- * `images/screenshot-mobile-<index>.png`, failing if the AVD is not the
- * 900x1600 one the store listing expects.
+ * Captures the device screen, composes it onto the store's canvas, and writes it
+ * as `images/screenshot-mobile-<index>.png`.
+ *
+ * The size is asserted on the COMPOSED image rather than the capture, because
+ * the capture is whatever the AVD's screen happens to be — that is the whole
+ * reason the composition step exists.
  *
  * @param index - The 1-based listing position.
  */
 async function shoot(index: number): Promise<void> {
-  const bytes = await captureObsidianScreenshot({ vaultPath: vaultPath() });
+  const captured = await captureObsidianScreenshot({ vaultPath: vaultPath() });
+  const fitted = await fitScreenshotToCanvas(captured, {
+    canvasHeightInPixels: HEIGHT_IN_PIXELS,
+    canvasWidthInPixels: WIDTH_IN_PIXELS
+  });
 
-  expect(readPngDimensions(bytes)).toStrictEqual({
+  expect(readPngDimensions(fitted)).toStrictEqual({
     heightInPixels: HEIGHT_IN_PIXELS,
     widthInPixels: WIDTH_IN_PIXELS
   });
 
   mkdirSync(IMAGES_DIRECTORY, { recursive: true });
-  writeFileSync(join(IMAGES_DIRECTORY, `screenshot-mobile-${String(index)}.png`), bytes);
+  writeFileSync(join(IMAGES_DIRECTORY, `screenshot-mobile-${String(index)}.png`), fitted);
 }
 
 function vaultPath(): string {
