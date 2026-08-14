@@ -11,10 +11,12 @@
  * reproducible — when a UI change dates a shot, re-running this regenerates it,
  * and the storyboard is reviewed in the same diff as the change that dated it.
  *
- * Each shot shows a DIFFERENT capability, and every one shows the plugin
- * WORKING. There is deliberately no "plugin disabled" before-shot: a listing
- * carousel shows these one at a time with no caption, so an unlabelled
- * before-shot reads as a picture of the problem the plugin causes.
+ * Each shot shows a DIFFERENT capability, and each is CAPTIONED by
+ * `labelScreenshot` after capture. The caption is what makes shot 2 — the pane
+ * without the plugin — safe to include: a listing carousel shows screenshots one
+ * at a time, so an unlabelled before-shot reads as a picture of what the plugin
+ * DOES rather than of what it fixes. It was dropped for exactly that reason
+ * before captions existed.
  *
  * There is deliberately NO settings-tab shot. Obsidian's settings modal attaches
  * itself through `activeWindow`/`activeDocument`, and under CDP evaluation
@@ -34,6 +36,7 @@ import {
   buildDemoVaultPopulate,
   captureObsidianScreenshot,
   evalInObsidian,
+  labelScreenshot,
   readPngDimensions
 } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
@@ -207,38 +210,37 @@ beforeAll(async () => {
 });
 
 describe('desktop store screenshots', () => {
-  it('1 - backlinks carry their full path, so seven notes called Meeting are told apart', async () => {
-    await setSettings({ pathDepth: 0, shouldDisplayParentPathOnSeparateLine: false, shouldReversePathParts: false });
-    await shoot(1);
+  it('1 - every backlink carries its full path', async () => {
+    await setSettings({ pathDepth: 0, rootPaths: [], shouldDisplayParentPathOnSeparateLine: false, shouldReversePathParts: false });
+    await shoot(1, 'Every backlink shows its full folder path');
   });
 
-  it('2 - rootPaths shows each path relative to a folder you nominate', async () => {
-    // Deliberately NOT a "plugin disabled" before-shot. A listing carousel shows
-    // These one at a time with no caption, so an unlabelled before-shot reads as
-    // "this plugin shows identical Meeting rows" — the opposite of the message.
-    // Every shot in the set therefore shows the plugin WORKING.
+  it('2 - the same pane without the plugin, for contrast', async () => {
+    // A before-shot is only safe BECAUSE of the caption. A listing carousel
+    // Shows screenshots one at a time, so an unlabelled one reads as a picture
+    // Of what the plugin does, not of what it fixes.
+    await setPluginEnabled(false);
+    await shoot(2, 'Without the plugin: seven notes, all named Meeting');
+    await setPluginEnabled(true);
+  });
+
+  it('3 - rootPaths shows each path relative to a folder you nominate', async () => {
     await setSettings({ pathDepth: 0, rootPaths: [SUBJECT_ROOT_PATH], shouldReversePathParts: false });
-    await shoot(2);
+    await shoot(3, 'Show paths relative to a folder you choose');
     await setSettings({ rootPaths: [] });
   });
 
-  it('3 - the folder path can sit on its own line above the file name', async () => {
-    await setSettings({ shouldDisplayParentPathOnSeparateLine: true });
-    await shoot(3);
-  });
-
-  it('4 - pathDepth trims deep paths to the folder that matters, with an ellipsis', async () => {
-    // `partsToSkipCount = parentPathParts.length - pathDepth + 1`, so the depth
-    // Counts the file name too: 2 keeps exactly one folder. Depth 1 keeps NONE,
-    // Rendering three identical `.../Meeting.md` rows — the very confusion this
+  it('4 - pathDepth trims deep paths to the folder that matters', async () => {
+    // The depth counts the FILE NAME too, so 2 keeps exactly one folder. Depth 1
+    // Keeps none, rendering identical trimmed rows — the very confusion this
     // Plugin exists to remove, which is no way to sell it.
     await setSettings({ pathDepth: 2, shouldDisplayParentPathOnSeparateLine: false });
-    await shoot(4);
+    await shoot(4, 'Trim long paths to the folder that matters');
   });
 
-  it('5 - the path can read outwards from the file, for scanning by file name first', async () => {
+  it('5 - the path can read outwards from the file', async () => {
     await setSettings({ pathDepth: 0, shouldReversePathParts: true });
-    await shoot(5);
+    await shoot(5, 'Or read the path outwards, file name first');
   });
 });
 
@@ -261,6 +263,32 @@ function buildStagedMeetingNotes(): Record<string, string> {
   }
 
   return notes;
+}
+
+/**
+ * Enables or disables the plugin, for the one shot that shows the state its
+ * absence leaves behind.
+ *
+ * @param isEnabled - Whether the plugin should be on.
+ */
+async function setPluginEnabled(isEnabled: boolean): Promise<void> {
+  await evalInObsidian({
+    async callback({ app, isEnabled: shouldEnable, pluginId }) {
+      const SETTLE_DELAY_IN_MILLISECONDS = 1000;
+
+      if (shouldEnable) {
+        await app.plugins.enablePlugin(pluginId);
+      } else {
+        await app.plugins.disablePlugin(pluginId);
+      }
+
+      // Toggling the plugin closes the pane, so it has to be re-opened.
+      app.commands.executeCommandById('backlink:open');
+      await sleep(SETTLE_DELAY_IN_MILLISECONDS);
+    },
+    input: { isEnabled, pluginId: PLUGIN_ID },
+    vaultPath: vaultPath()
+  });
 }
 
 /**
@@ -297,20 +325,25 @@ async function setSettings(settings: Record<string, boolean | number | string[]>
  *
  * @param index - The 1-based listing position.
  */
-async function shoot(index: number): Promise<void> {
+async function shoot(index: number, caption: string): Promise<void> {
   const bytes = await captureObsidianScreenshot({
     heightInPixels: HEIGHT_IN_PIXELS,
     vaultPath: vaultPath(),
     widthInPixels: WIDTH_IN_PIXELS
   });
 
-  expect(readPngDimensions(bytes)).toStrictEqual({
+  // Captioned AFTER capture, so the frame stays an untouched Obsidian window and
+  // Rewording a label needs no re-shoot. The band covers the status bar, which
+  // Is chrome rather than content.
+  const labeled = await labelScreenshot(bytes, { text: caption });
+
+  expect(readPngDimensions(labeled)).toStrictEqual({
     heightInPixels: HEIGHT_IN_PIXELS,
     widthInPixels: WIDTH_IN_PIXELS
   });
 
   mkdirSync(IMAGES_DIRECTORY, { recursive: true });
-  writeFileSync(join(IMAGES_DIRECTORY, `screenshot-desktop-${String(index)}.png`), bytes);
+  writeFileSync(join(IMAGES_DIRECTORY, `screenshot-desktop-${String(index)}.png`), labeled);
 }
 
 function vaultPath(): string {
