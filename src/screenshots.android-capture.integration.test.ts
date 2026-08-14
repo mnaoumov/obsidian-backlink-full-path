@@ -6,11 +6,9 @@
  * Android emulator and writing `images/screenshot-mobile-N.png`.
  *
  * The mobile counterpart of the desktop capture suite, showing the same five
- * capabilities. Every shot shows the plugin WORKING — there is deliberately no
- * "plugin disabled" before-shot, because a listing carousel shows these one at a
- * time with no caption. What differs from desktop is the frame — a phone shows the backlinks in a drawer over the note
- * rather than beside it, which is exactly why the mobile set is worth taking
- * rather than reusing the desktop images.
+ * captioned capabilities. What differs is the frame — a phone shows the
+ * backlinks in a drawer over the note rather than beside it, which is exactly
+ * why the mobile set is worth taking rather than reusing the desktop images.
  *
  * There is no mobile equivalent of the desktop viewport override, so the capture
  * is always the device's own framebuffer. The fix is therefore to make the
@@ -49,6 +47,7 @@ import {
   buildDemoVaultPopulate,
   captureObsidianScreenshot,
   evalInObsidian,
+  labelScreenshot,
   readPngDimensions
 } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
@@ -120,9 +119,14 @@ const SUBJECT_NOTE_PATH = 'Materials/01 Backlink full path/Shared topic.md';
 const SUBJECT_ROOT_PATH = 'Materials/01 Backlink full path';
 
 /**
- * Base font size for the mobile shots, against Obsidian's 16px default.
+ * Base font size for the mobile shots.
+ *
+ * Left at Obsidian's own 16px default. An 18px bump was tried while the capture
+ * was being DOWNSCALED from 1344 wide to 718, where it was needed for
+ * legibility; at native 900x1600 nothing is downscaled, and 18px pushes the
+ * longest path into a mid-word wrap that reads as a rendering bug.
  */
-const MOBILE_FONT_SIZE_IN_PIXELS = 18;
+const MOBILE_FONT_SIZE_IN_PIXELS = 16;
 
 /**
  * Extra notes staged for the screenshots ONLY, all named `Meeting` and all
@@ -245,38 +249,42 @@ beforeAll(async () => {
 describe('mobile store screenshots', () => {
   it('renders the backlinks pane the shots are framed on', () => {
     // Surfaced as an assertion because vitest swallows console output from an
-    // Integration worker, and a silently-wrong layout produces five bad images.
+    // Integration worker, and a silently-wrong layout produces five bad images
+    // Without a single failure — which is exactly what happened once.
     expect(setupDiagnostics).toMatchObject({ hasBacklinkComponent: true });
   });
 
-  it('1 - backlinks carry their full path, so seven notes called Meeting are told apart', async () => {
-    await setSettings({ pathDepth: 0, shouldDisplayParentPathOnSeparateLine: false, shouldReversePathParts: false });
-    await shoot(1);
+  it('1 - every backlink carries its full path', async () => {
+    await setSettings({ pathDepth: 0, rootPaths: [], shouldDisplayParentPathOnSeparateLine: false, shouldReversePathParts: false });
+    await shoot(1, 'Every backlink shows its full folder path');
   });
 
-  it('2 - rootPaths shows each path relative to a folder you nominate', async () => {
-    // Deliberately NOT a "plugin disabled" before-shot. A listing carousel shows
-    // These one at a time with no caption, so an unlabelled before-shot reads as
-    // "this plugin shows six identical Meeting rows" — the opposite of the
-    // Message. Every shot in the set therefore shows the plugin WORKING.
+  it('2 - the same pane without the plugin, for contrast', async () => {
+    // A before-shot is only safe BECAUSE of the caption. A listing carousel
+    // Shows screenshots one at a time, so an unlabelled one reads as a picture
+    // Of what the plugin does, not of what it fixes.
+    await setPluginEnabled(false);
+    await shoot(2, 'Without the plugin: seven notes, all named Meeting');
+    await setPluginEnabled(true);
+  });
+
+  it('3 - rootPaths shows each path relative to a folder you nominate', async () => {
     await setSettings({ pathDepth: 0, rootPaths: [SUBJECT_ROOT_PATH], shouldReversePathParts: false });
-    await shoot(2);
+    await shoot(3, 'Show paths relative to a folder you choose');
     await setSettings({ rootPaths: [] });
   });
 
-  it('3 - the folder path can sit on its own line above the file name', async () => {
-    await setSettings({ shouldDisplayParentPathOnSeparateLine: true });
-    await shoot(3);
-  });
-
-  it('4 - pathDepth trims deep paths to the folder that matters, with an ellipsis', async () => {
+  it('4 - pathDepth trims deep paths to the folder that matters', async () => {
+    // The depth counts the FILE NAME too, so 2 keeps exactly one folder. Depth 1
+    // Keeps none, rendering identical trimmed rows — the very confusion this
+    // Plugin exists to remove, which is no way to sell it.
     await setSettings({ pathDepth: 2, shouldDisplayParentPathOnSeparateLine: false });
-    await shoot(4);
+    await shoot(4, 'Trim long paths to the folder that matters');
   });
 
-  it('5 - the path can read outwards from the file, for scanning by file name first', async () => {
+  it('5 - the path can read outwards from the file', async () => {
     await setSettings({ pathDepth: 0, shouldReversePathParts: true });
-    await shoot(5);
+    await shoot(5, 'Or read the path outwards, file name first');
   });
 });
 
@@ -299,6 +307,35 @@ function buildStagedMeetingNotes(): Record<string, string> {
   }
 
   return notes;
+}
+
+/**
+ * Enables or disables the plugin, for the one shot that shows the state its
+ * absence leaves behind.
+ *
+ * @param isEnabled - Whether the plugin should be on.
+ */
+async function setPluginEnabled(isEnabled: boolean): Promise<void> {
+  await evalInObsidian({
+    async callback({ app, isEnabled: shouldEnable, pluginId }) {
+      const SETTLE_DELAY_IN_MILLISECONDS = 1500;
+
+      if (shouldEnable) {
+        await app.plugins.enablePlugin(pluginId);
+      } else {
+        await app.plugins.disablePlugin(pluginId);
+      }
+
+      // Toggling the plugin closes the drawer, so the pane has to be re-opened
+      // AND re-expanded — otherwise the shot is a picture of the note, showing
+      // No backlinks at all, which demonstrates nothing.
+      app.commands.executeCommandById('backlink:open');
+      app.workspace.rightSplit.expand();
+      await sleep(SETTLE_DELAY_IN_MILLISECONDS);
+    },
+    input: { isEnabled, pluginId: PLUGIN_ID },
+    vaultPath: vaultPath()
+  });
 }
 
 /**
@@ -337,7 +374,7 @@ async function setSettings(settings: Record<string, boolean | number | string[]>
  *
  * @param index - The 1-based listing position.
  */
-async function shoot(index: number): Promise<void> {
+async function shoot(index: number, caption: string): Promise<void> {
   const captured = await captureObsidianScreenshot({ vaultPath: vaultPath() });
 
   // The AVD is 900x1600, so the device frame IS the store's size — no crop, no
@@ -349,8 +386,13 @@ async function shoot(index: number): Promise<void> {
     widthInPixels: WIDTH_IN_PIXELS
   });
 
+  // Captioned AFTER capture, so the frame stays an untouched device screenshot
+  // And rewording a label needs no re-shoot. The band also covers the sync
+  // Indicator and word count, which are chrome rather than content.
+  const labeled = await labelScreenshot(captured, { text: caption });
+
   mkdirSync(IMAGES_DIRECTORY, { recursive: true });
-  writeFileSync(join(IMAGES_DIRECTORY, `screenshot-mobile-${String(index)}.png`), captured);
+  writeFileSync(join(IMAGES_DIRECTORY, `screenshot-mobile-${String(index)}.png`), labeled);
 }
 
 function vaultPath(): string {
