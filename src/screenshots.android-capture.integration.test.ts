@@ -5,24 +5,38 @@
  * (T461-P21), driving the demo vault's fixtures in Obsidian Mobile on a real
  * Android emulator and writing `images/screenshot-mobile-N.png`.
  *
- * The mobile counterpart of the desktop capture suite, and the same storyboard:
- * the payoff, the problem it removes, and three alternative renderings. What
- * differs is the frame — a phone shows the backlinks in a drawer over the note
+ * The mobile counterpart of the desktop capture suite, showing the same five
+ * capabilities. Every shot shows the plugin WORKING — there is deliberately no
+ * "plugin disabled" before-shot, because a listing carousel shows these one at a
+ * time with no caption. What differs from desktop is the frame — a phone shows the backlinks in a drawer over the note
  * rather than beside it, which is exactly why the mobile set is worth taking
  * rather than reusing the desktop images.
  *
  * There is no mobile equivalent of the desktop viewport override, so the capture
- * is always the device's own framebuffer — 1344x2992 on the shared
- * `obsidian_test` AVD, roughly 9:20 against the store's 9:16. Rather than crop
- * away a fifth of the frame or stretch it, each shot is composed onto the
- * store's canvas by `fitScreenshotToCanvas`: scaled to 718x1600, centred, with
- * the 91px margins either side filled by a blurred copy of the same frame.
+ * is always the device's own framebuffer. The fix is therefore to make the
+ * DEVICE the right size: this runs on a dedicated `obsidian_screenshots` AVD
+ * built at exactly 900x1600, so the frame already IS the store's size — no crop,
+ * no rescale, no letterbox, no post-processing at all.
  *
- * Two alternatives were tried and rejected. A dedicated 900x1600 AVD reaches
- * Appium but Obsidian's layout never becomes ready on it. Resizing the shared
- * AVD with `adb shell wm size` is an Android configuration change that recreates
- * the activity, destroying the WebView the Appium session is attached to — every
- * later call dies with `no such window: target window already closed`.
+ * Two alternatives were tried first. Both are dead ends, recorded so they are
+ * not retried:
+ *
+ * - Compositing the shared `obsidian_test` AVD's 1344x2994 frame onto a 900x1600
+ *   canvas (scaled to 718x1600 with blurred side margins). On-spec but ugly:
+ *   about a third of the image is non-content, because Obsidian's mobile drawer
+ *   covers only 84% of the width and the blurred margins eat another 20%.
+ * - `adb shell wm size 900x1600` on the shared AVD. The display change is an
+ *   Android configuration change that recreates the activity, destroying the
+ *   WebView the Appium session is attached to; every later call dies with
+ *   `no such window: target window already closed`.
+ *
+ * The screenshot AVD needs ONE-TIME provisioning and both steps are non-obvious
+ * — see [[T461-P21]]. The harness never installs the Obsidian APK, and because
+ * it launches emulators with `-no-snapshot-save`, an install performed under
+ * that flag is silently discarded. Installing is also not sufficient on its own:
+ * Obsidian's first-run onboarding has to be completed by hand once, or
+ * `layoutReady` never becomes true and setup fails after the full timeout with
+ * `Obsidian layout did not become ready`.
  */
 
 import {
@@ -35,7 +49,6 @@ import {
   buildDemoVaultPopulate,
   captureObsidianScreenshot,
   evalInObsidian,
-  fitScreenshotToCanvas,
   readPngDimensions
 } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
@@ -58,7 +71,22 @@ interface BacklinkPaneComponent {
  * The backlink leaf's view, reduced to the component above.
  */
 interface BacklinkPaneView {
-  backlink: BacklinkPaneComponent;
+  backlink?: BacklinkPaneComponent;
+}
+
+/**
+ * `App`, reduced to the font-size applier that `obsidian-typings` does not
+ * declare. Setting `baseFontSize` alone changes nothing on screen.
+ */
+interface FontSizeApp {
+  updateFontSize(this: void): void;
+}
+
+/**
+ * `App`, reduced to the inline-title applier, likewise undeclared.
+ */
+interface InlineTitleApp {
+  updateInlineTitleDisplay(this: void): void;
 }
 
 /**
@@ -85,8 +113,43 @@ const HEIGHT_IN_PIXELS = 1600;
  */
 const SUBJECT_NOTE_PATH = 'Materials/01 Backlink full path/Shared topic.md';
 
+/**
+ * The folder the `rootPaths` shot nominates as a root, so displayed paths drop
+ * this prefix and read as `Team/Weekly/Meeting.md`.
+ */
+const SUBJECT_ROOT_PATH = 'Materials/01 Backlink full path';
+
+/**
+ * Base font size for the mobile shots, against Obsidian's 16px default.
+ */
+const MOBILE_FONT_SIZE_IN_PIXELS = 18;
+
+/**
+ * Extra notes staged for the screenshots ONLY, all named `Meeting` and all
+ * linking to the subject note.
+ *
+ * The demo vault ships three, which is enough to make the point on a 3:2
+ * desktop frame but leaves two thirds of a 9:20 phone frame empty. Seven fills
+ * the column with clean path rows, and is a stronger demonstration besides —
+ * the more notes share a name, the more obviously the path is what saves you.
+ * The task file sanctions this directly: stage the vault content so the payoff
+ * is visible in one frame.
+ */
+const STAGED_MEETING_FOLDERS = [
+  'Projects/Gamma',
+  'Projects/Delta',
+  'Archive/2024',
+  'Team/Weekly'
+];
+
 const IMAGES_DIRECTORY = join(process.cwd(), 'images');
 const DEMO_VAULT_PATH = join(process.cwd(), 'demo-vault');
+
+/**
+ * Diagnostics from the setup closure, surfaced by the first test so a failed
+ * mobile layout is readable instead of silent.
+ */
+let setupDiagnostics: unknown;
 
 beforeAll(async () => {
   const vault = getTemporaryVault();
@@ -98,14 +161,22 @@ beforeAll(async () => {
     Object.entries(demoVaultFiles).filter(([path]) => path.startsWith('Materials/'))
   );
 
-  vault.populate(fixtures);
+  vault.populate({ ...fixtures, ...buildStagedMeetingNotes() });
   await vault.syncToDevice();
 
-  await evalInObsidian({
-    async callback({ app, lib: { waitUntil }, subjectNotePath }) {
-      const SETTLE_TIMEOUT_IN_MILLISECONDS = 60_000;
+  setupDiagnostics = await evalInObsidian({
+    async callback({ app, fontSizeInPixels, lib: { waitUntil }, subjectNotePath }) {
+      const SETTLE_TIMEOUT_IN_MILLISECONDS = 20_000;
       const SETTLE_DELAY_IN_MILLISECONDS = 1500;
-      const BACKLINK_COUNT = 3;
+      // Three from the demo vault plus the four staged above; waiting for the
+      // Full set stops a shot being taken while the pane is still filling in.
+      const BACKLINK_COUNT = 7;
+
+      // A closure runs inside ONE Appium `execute/sync` call, which WebDriver
+      // Caps around 30s — well below the harness's own timeouts. A longer wait
+      // In here dies as an opaque `script timeout` rather than as a readable
+      // Assertion failure, so keep every in-closure wait comfortably under it.
+      const RENDER_TIMEOUT_IN_MILLISECONDS = 20_000;
 
       app.changeTheme('obsidian');
 
@@ -127,41 +198,70 @@ beforeAll(async () => {
       app.commands.executeCommandById('backlink:open');
 
       await waitUntil({
-        message: 'the Backlinks pane to list the three Meeting notes',
+        message: 'the Backlinks pane to list every Meeting note',
         predicate: () => document.querySelectorAll('.backlink-pane .tree-item-inner').length >= BACKLINK_COUNT,
-        timeoutInMilliseconds: SETTLE_TIMEOUT_IN_MILLISECONDS
+        timeoutInMilliseconds: RENDER_TIMEOUT_IN_MILLISECONDS
       });
 
       // On a phone the backlinks live in a drawer that opens OVER the note, so
       // The drawer has to be expanded for the pane to be in frame at all.
       app.workspace.rightSplit.expand();
 
-      // Context excerpts turn every entry into a block of highlighted raw
-      // Markdown, burying the path in the entry's title — and a phone frame has
-      // Far less room to spare than the desktop one.
+      // Slightly bigger type, because a 900x1600 listing image is read as a
+      // THUMBNAIL. Not much bigger: the paths are long, and past ~18px the
+      // Entry titles start wrapping mid-word, which reads as a rendering bug.
+      app.vault.setConfig('baseFontSize', fontSizeInPixels);
+      const fontApp: unknown = app;
+      (fontApp as FontSizeApp).updateFontSize();
+
+      // The note's own `# Shared topic` heading already titles it, so Obsidian's
+      // Inline title renders the name twice. `updateOptions` does NOT pick this
+      // Up — the setting is applied by toggling a class on `document.body`.
+      app.vault.setConfig('showInlineTitle', false);
+      (fontApp as InlineTitleApp).updateInlineTitleDisplay();
+
+      // Context excerpts OFF, exactly as on desktop. Turning them on to fill a
+      // Phone frame was tried and is much worse: the excerpts are the notes'
+      // Raw markdown, so `[Shared topic](<../../Shared topic.md>)` in yellow
+      // Highlight becomes the largest thing in the image. The frame is filled
+      // Instead by staging MORE same-named notes — see the populate map above.
       const backlinkView: unknown = app.workspace.getLeavesOfType('backlink')[0]?.view;
-      if (backlinkView) {
-        (backlinkView as BacklinkPaneView).backlink.setExtraContext(false);
-        (backlinkView as BacklinkPaneView).backlink.setCollapseAll(true);
-      }
+      const backlinks = (backlinkView as BacklinkPaneView | null)?.backlink;
+      backlinks?.setExtraContext(false);
+      backlinks?.setCollapseAll(true);
 
       await sleep(SETTLE_DELAY_IN_MILLISECONDS);
+
+      return {
+        hasBacklinkComponent: Boolean(backlinks),
+        paneItems: document.querySelectorAll('.backlink-pane .tree-item-inner').length
+      };
     },
-    input: { subjectNotePath: SUBJECT_NOTE_PATH },
+    input: { fontSizeInPixels: MOBILE_FONT_SIZE_IN_PIXELS, subjectNotePath: SUBJECT_NOTE_PATH },
     vaultPath: vaultPath()
   });
 });
 
 describe('mobile store screenshots', () => {
-  it('1 - backlinks carry their full path, so three notes called Meeting are told apart', async () => {
+  it('renders the backlinks pane the shots are framed on', () => {
+    // Surfaced as an assertion because vitest swallows console output from an
+    // Integration worker, and a silently-wrong layout produces five bad images.
+    expect(setupDiagnostics).toMatchObject({ hasBacklinkComponent: true });
+  });
+
+  it('1 - backlinks carry their full path, so seven notes called Meeting are told apart', async () => {
     await setSettings({ pathDepth: 0, shouldDisplayParentPathOnSeparateLine: false, shouldReversePathParts: false });
     await shoot(1);
   });
 
-  it('2 - without the plugin the same pane is three identical Meeting rows', async () => {
-    await setPluginEnabled(false);
+  it('2 - rootPaths shows each path relative to a folder you nominate', async () => {
+    // Deliberately NOT a "plugin disabled" before-shot. A listing carousel shows
+    // These one at a time with no caption, so an unlabelled before-shot reads as
+    // "this plugin shows six identical Meeting rows" — the opposite of the
+    // Message. Every shot in the set therefore shows the plugin WORKING.
+    await setSettings({ pathDepth: 0, rootPaths: [SUBJECT_ROOT_PATH], shouldReversePathParts: false });
     await shoot(2);
-    await setPluginEnabled(true);
+    await setSettings({ rootPaths: [] });
   });
 
   it('3 - the folder path can sit on its own line above the file name', async () => {
@@ -181,29 +281,24 @@ describe('mobile store screenshots', () => {
 });
 
 /**
- * Enables or disables the plugin, so a shot can show the state its absence
- * leaves behind.
+ * Builds the staged `Meeting` notes described by {@link STAGED_MEETING_FOLDERS}.
  *
- * @param isEnabled - Whether the plugin should be on.
+ * Each links to the subject note with a relative Markdown link, matching the
+ * demo vault's own fixtures so every backlink entry looks the same.
+ *
+ * @returns A populate map of vault-relative paths to note content.
  */
-async function setPluginEnabled(isEnabled: boolean): Promise<void> {
-  await evalInObsidian({
-    async callback({ app, isEnabled: shouldEnable, pluginId }) {
-      const SETTLE_DELAY_IN_MILLISECONDS = 1500;
+function buildStagedMeetingNotes(): Record<string, string> {
+  const notes: Record<string, string> = {};
 
-      if (shouldEnable) {
-        await app.plugins.enablePlugin(pluginId);
-      } else {
-        await app.plugins.disablePlugin(pluginId);
-      }
+  for (const folder of STAGED_MEETING_FOLDERS) {
+    const depth = folder.split('/').length;
+    const upwards = '../'.repeat(depth);
+    notes[`Materials/01 Backlink full path/${folder}/Meeting.md`] = `# Meeting\n\nNotes from the ${folder} meeting. Related to `
+      + `[Shared topic](<${upwards}Shared topic.md>).\n`;
+  }
 
-      app.commands.executeCommandById('backlink:open');
-      app.workspace.rightSplit.expand();
-      await sleep(SETTLE_DELAY_IN_MILLISECONDS);
-    },
-    input: { isEnabled, pluginId: PLUGIN_ID },
-    vaultPath: vaultPath()
-  });
+  return notes;
 }
 
 /**
@@ -211,7 +306,7 @@ async function setPluginEnabled(isEnabled: boolean): Promise<void> {
  *
  * @param settings - The setting values to apply.
  */
-async function setSettings(settings: Record<string, boolean | number>): Promise<void> {
+async function setSettings(settings: Record<string, boolean | number | string[]>): Promise<void> {
   await evalInObsidian({
     async callback({ app, pluginId, settings: values }) {
       const SETTLE_DELAY_IN_MILLISECONDS = 1500;
@@ -244,18 +339,18 @@ async function setSettings(settings: Record<string, boolean | number>): Promise<
  */
 async function shoot(index: number): Promise<void> {
   const captured = await captureObsidianScreenshot({ vaultPath: vaultPath() });
-  const fitted = await fitScreenshotToCanvas(captured, {
-    canvasHeightInPixels: HEIGHT_IN_PIXELS,
-    canvasWidthInPixels: WIDTH_IN_PIXELS
-  });
 
-  expect(readPngDimensions(fitted)).toStrictEqual({
+  // The AVD is 900x1600, so the device frame IS the store's size — no crop, no
+  // Rescale, no letterbox. Asserting it here is what keeps that true: run this
+  // Against any other AVD and it fails loudly instead of quietly shipping an
+  // Off-spec image.
+  expect(readPngDimensions(captured)).toStrictEqual({
     heightInPixels: HEIGHT_IN_PIXELS,
     widthInPixels: WIDTH_IN_PIXELS
   });
 
   mkdirSync(IMAGES_DIRECTORY, { recursive: true });
-  writeFileSync(join(IMAGES_DIRECTORY, `screenshot-mobile-${String(index)}.png`), fitted);
+  writeFileSync(join(IMAGES_DIRECTORY, `screenshot-mobile-${String(index)}.png`), captured);
 }
 
 function vaultPath(): string {

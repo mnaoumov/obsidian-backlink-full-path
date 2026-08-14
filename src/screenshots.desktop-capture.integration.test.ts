@@ -11,8 +11,10 @@
  * reproducible — when a UI change dates a shot, re-running this regenerates it,
  * and the storyboard is reviewed in the same diff as the change that dated it.
  *
- * Each shot shows a DIFFERENT capability: the payoff, the problem it removes,
- * and three alternative renderings.
+ * Each shot shows a DIFFERENT capability, and every one shows the plugin
+ * WORKING. There is deliberately no "plugin disabled" before-shot: a listing
+ * carousel shows these one at a time with no caption, so an unlabelled
+ * before-shot reads as a picture of the problem the plugin causes.
  *
  * There is deliberately NO settings-tab shot. Obsidian's settings modal attaches
  * itself through `activeWindow`/`activeDocument`, and under CDP evaluation
@@ -97,6 +99,29 @@ const HEIGHT_IN_PIXELS = 800;
  */
 const SUBJECT_NOTE_PATH = 'Materials/01 Backlink full path/Shared topic.md';
 
+/**
+ * The folder the `rootPaths` shot nominates as a root, so displayed paths drop
+ * this prefix and read as `Team/Weekly/Meeting.md`.
+ */
+const SUBJECT_ROOT_PATH = 'Materials/01 Backlink full path';
+
+/**
+ * Extra notes staged for the screenshots ONLY, all named `Meeting` and all
+ * linking to the subject note.
+ *
+ * The demo vault ships three. Seven fills the pane and is a stronger
+ * demonstration besides — the more notes share a name, the more obviously the
+ * path is what saves you. The task file sanctions this directly: stage the
+ * vault content so the payoff is visible in one frame. Kept identical to the
+ * mobile suite so the two sets show the same vault.
+ */
+const STAGED_MEETING_FOLDERS = [
+  'Projects/Gamma',
+  'Projects/Delta',
+  'Archive/2024',
+  'Team/Weekly'
+];
+
 const IMAGES_DIRECTORY = join(process.cwd(), 'images');
 const DEMO_VAULT_PATH = join(process.cwd(), 'demo-vault');
 
@@ -113,14 +138,15 @@ beforeAll(async () => {
     Object.entries(demoVaultFiles).filter(([path]) => path.startsWith('Materials/'))
   );
 
-  vault.populate(fixtures);
+  vault.populate({ ...fixtures, ...buildStagedMeetingNotes() });
   await vault.syncToDevice();
 
   await evalInObsidian({
     async callback({ app, lib: { waitUntil }, subjectNotePath }) {
       const SETTLE_TIMEOUT_IN_MILLISECONDS = 30_000;
       const SETTLE_DELAY_IN_MILLISECONDS = 1000;
-      const BACKLINK_COUNT = 3;
+      // Three from the demo vault plus the four staged above.
+      const BACKLINK_COUNT = 7;
       const BACKLINKS_PANE_WIDTH_IN_PIXELS = 560;
 
       // The whole fleet is shot in the default DARK theme so the sets read as one
@@ -147,7 +173,7 @@ beforeAll(async () => {
       app.commands.executeCommandById('backlink:open');
 
       await waitUntil({
-        message: 'the Backlinks pane to list the three Meeting notes',
+        message: 'the Backlinks pane to list every Meeting note',
         predicate: () => document.querySelectorAll('.backlink-pane .tree-item-inner').length >= BACKLINK_COUNT,
         timeoutInMilliseconds: SETTLE_TIMEOUT_IN_MILLISECONDS
       });
@@ -181,15 +207,19 @@ beforeAll(async () => {
 });
 
 describe('desktop store screenshots', () => {
-  it('1 - backlinks carry their full path, so three notes called Meeting are told apart', async () => {
+  it('1 - backlinks carry their full path, so seven notes called Meeting are told apart', async () => {
     await setSettings({ pathDepth: 0, shouldDisplayParentPathOnSeparateLine: false, shouldReversePathParts: false });
     await shoot(1);
   });
 
-  it('2 - without the plugin the same pane is three identical Meeting rows', async () => {
-    await setPluginEnabled(false);
+  it('2 - rootPaths shows each path relative to a folder you nominate', async () => {
+    // Deliberately NOT a "plugin disabled" before-shot. A listing carousel shows
+    // These one at a time with no caption, so an unlabelled before-shot reads as
+    // "this plugin shows identical Meeting rows" — the opposite of the message.
+    // Every shot in the set therefore shows the plugin WORKING.
+    await setSettings({ pathDepth: 0, rootPaths: [SUBJECT_ROOT_PATH], shouldReversePathParts: false });
     await shoot(2);
-    await setPluginEnabled(true);
+    await setSettings({ rootPaths: [] });
   });
 
   it('3 - the folder path can sit on its own line above the file name', async () => {
@@ -213,29 +243,24 @@ describe('desktop store screenshots', () => {
 });
 
 /**
- * Enables or disables the plugin, so a shot can show the state its absence
- * leaves behind.
+ * Builds the staged `Meeting` notes described by {@link STAGED_MEETING_FOLDERS}.
  *
- * @param isEnabled - Whether the plugin should be on.
+ * Each links to the subject note with a relative Markdown link, matching the
+ * demo vault's own fixtures so every backlink entry looks the same.
+ *
+ * @returns A populate map of vault-relative paths to note content.
  */
-async function setPluginEnabled(isEnabled: boolean): Promise<void> {
-  await evalInObsidian({
-    async callback({ app, isEnabled: shouldEnable, pluginId }) {
-      const SETTLE_DELAY_IN_MILLISECONDS = 1000;
+function buildStagedMeetingNotes(): Record<string, string> {
+  const notes: Record<string, string> = {};
 
-      if (shouldEnable) {
-        await app.plugins.enablePlugin(pluginId);
-      } else {
-        await app.plugins.disablePlugin(pluginId);
-      }
+  for (const folder of STAGED_MEETING_FOLDERS) {
+    const depth = folder.split('/').length;
+    const upwards = '../'.repeat(depth);
+    notes[`${SUBJECT_ROOT_PATH}/${folder}/Meeting.md`] = `# Meeting\n\nNotes from the ${folder} meeting. Related to `
+      + `[Shared topic](<${upwards}Shared topic.md>).\n`;
+  }
 
-      // The pane only re-renders on the next recompute, so nudge it.
-      app.commands.executeCommandById('backlink:open');
-      await sleep(SETTLE_DELAY_IN_MILLISECONDS);
-    },
-    input: { isEnabled, pluginId: PLUGIN_ID },
-    vaultPath: vaultPath()
-  });
+  return notes;
 }
 
 /**
@@ -243,7 +268,7 @@ async function setPluginEnabled(isEnabled: boolean): Promise<void> {
  *
  * @param settings - The setting values to apply.
  */
-async function setSettings(settings: Record<string, boolean | number>): Promise<void> {
+async function setSettings(settings: Record<string, boolean | number | string[]>): Promise<void> {
   await evalInObsidian({
     async callback({ app, pluginId, settings: values }) {
       const SETTLE_DELAY_IN_MILLISECONDS = 1000;
