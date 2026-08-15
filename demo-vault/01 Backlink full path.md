@@ -18,7 +18,31 @@ With the plugin, each backlink carries its full path:
 
 ## Try it
 
-1. Open [Shared topic](<./Materials/01 Backlink full path/Shared topic.md>).
-2. Open the **Backlinks** pane (right sidebar link icon, or the command **Backlinks: Show backlinks**).
-3. Notice each backlink now carries its full path.
-4. Head to [02 Settings](<./02 Settings.md>) and tweak how the path is rendered - depth, highlighting, extension, ordering, and more.
+```code-button
+---
+caption: Open "Shared topic" and show its Backlinks pane
+---
+await require('/demoSetup.ts').showBacklinks(app);
+```
+
+Manual equivalent: open [Shared topic](<./Materials/01 Backlink full path/Shared topic.md>), then run **Backlinks: Show backlinks** (or click the link icon in the right sidebar).
+
+Each backlink carries its full path. To see what the pane looks like without the plugin - the first screenshot above, but live - turn it off and back on:
+
+```code-button
+---
+caption: Turn the plugin off
+---
+await require('/demoSetup.ts').disablePlugin(app);
+```
+
+```code-button
+---
+caption: Turn the plugin back on
+---
+await require('/demoSetup.ts').enablePlugin(app);
+```
+
+Manual equivalent: toggle **Backlink Full Path** in **Settings -> Community plugins**.
+
+Then head to [02 Settings](<./02 Settings.md>) and tweak how the path is rendered - depth, highlighting, extension, ordering, and more.
