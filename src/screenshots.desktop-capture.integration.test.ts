@@ -18,10 +18,17 @@
  * DOES rather than of what it fixes. It was dropped for exactly that reason
  * before captions existed.
  *
- * There is deliberately NO settings-tab shot. Obsidian's settings modal attaches
- * itself through `activeWindow`/`activeDocument`, and under CDP evaluation
- * `activeWindow !== window`, so `app.setting.open()` builds the modal but never
- * lands it in the document being captured — in hidden AND visible mode alike.
+ * There is no settings-tab shot because Obsidian's settings modal cannot be
+ * opened from here: `app.setting.open()` returns without throwing and leaves
+ * `containerEl` detached, so nothing lands in the captured document. Verified
+ * through both `evalInObsidian` and a raw CDP evaluation, in hidden and visible
+ * window modes alike.
+ *
+ * This is specific to the SETTINGS modal. Ordinary modals open normally under
+ * the same conditions — `new Modal(app).open()` attaches and renders — so a
+ * plugin whose feature IS a modal can still be captured. Do not generalize the
+ * limitation above into "modals do not work".
+ *
  * The renderings below are the feature anyway, which is the only condition under
  * which a settings screenshot would have earned a slot.
  */
