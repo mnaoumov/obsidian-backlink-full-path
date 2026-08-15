@@ -3,7 +3,7 @@
  *
  * Produces the five desktop screenshots the community-store listing needs
  * (T461-P21), driving the demo vault's fixtures in a real Obsidian and writing
- * `images/screenshot-desktop-N.png`.
+ * `images/screenshots/screenshot-desktop-N.png`.
  *
  * This is a capture script rather than an assertion suite: it runs in the
  * desktop integration project because that is where a real, plugin-enabled
@@ -132,7 +132,7 @@ const STAGED_MEETING_FOLDERS = [
   'Team/Weekly'
 ];
 
-const IMAGES_DIRECTORY = join(process.cwd(), 'images');
+const IMAGES_DIRECTORY = join(process.cwd(), 'images', 'screenshots');
 const DEMO_VAULT_PATH = join(process.cwd(), 'demo-vault');
 
 beforeAll(async () => {
