@@ -21,7 +21,9 @@
     "Naumov",
     "noopAsync",
     "tsbuildinfo",
-    "unsanitized"
+    "unsanitized",
+    "unvalidated",
+    "wdio"
   ],
   "ignoreWords": [],
   "import": [],
