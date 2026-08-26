@@ -1,32 +1,29 @@
 # Backlink Full Path
 
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mnaoumov)
-[![GitHub release](https://img.shields.io/github/v/release/mnaoumov/obsidian-backlink-full-path)](https://github.com/mnaoumov/obsidian-backlink-full-path/releases)
-[![GitHub downloads](https://img.shields.io/github/downloads/mnaoumov/obsidian-backlink-full-path/total)](https://github.com/mnaoumov/obsidian-backlink-full-path/releases)
-[![Coverage: 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/mnaoumov/obsidian-backlink-full-path)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mnaoumov) [![GitHub release](https://img.shields.io/github/v/release/mnaoumov/obsidian-backlink-full-path)](https://github.com/mnaoumov/obsidian-backlink-full-path/releases) [![GitHub downloads](https://img.shields.io/github/downloads/mnaoumov/obsidian-backlink-full-path/total)](https://github.com/mnaoumov/obsidian-backlink-full-path/releases) [![Coverage: 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/mnaoumov/obsidian-backlink-full-path)
 
-[Obsidian](https://obsidian.md/)'s Backlinks pane lists each backlink by note name alone. If you keep a
-`Meeting` note in three different project folders — which is the natural way to organize them — the
-pane shows three identical rows and no way to tell which is which without opening each one.
+[Obsidian](https://obsidian.md/)'s Backlinks pane lists each backlink by note name alone. If you keep a `Meeting` note in three different project folders — which is the natural way to organize them — the pane shows three identical rows and no way to tell which is which without opening each one.
 
 This plugin shows each backlink's **full path** instead, so the list identifies its notes.
 
 <!-- markdownlint-disable MD033 -->
 
-<a href="images/screenshots/screenshot-desktop-1.png"><img src="images/screenshots/screenshot-desktop-1.png" alt="Every backlink shows its full folder path" width="600"></a>
+<a href="https://github.com/mnaoumov/obsidian-backlink-full-path/blob/HEAD/images/screenshots/screenshot-desktop-1.png"><img src="images/screenshots/screenshot-desktop-1.png" alt="Every backlink shows its full folder path" width="600"></a>
 
 <details>
 <summary>More screenshots</summary>
 
-<a href="images/screenshots/screenshot-desktop-2.png"><img src="images/screenshots/screenshot-desktop-2.png" alt="Without the plugin: seven notes, all named Meeting" width="600"></a>
-<a href="images/screenshots/screenshot-desktop-3.png"><img src="images/screenshots/screenshot-desktop-3.png" alt="Show paths relative to a folder you choose" width="600"></a>
-<a href="images/screenshots/screenshot-desktop-4.png"><img src="images/screenshots/screenshot-desktop-4.png" alt="Trim long paths to the folder that matters" width="600"></a>
-<a href="images/screenshots/screenshot-desktop-5.png"><img src="images/screenshots/screenshot-desktop-5.png" alt="Or read the path outwards, file name first" width="600"></a>
-<a href="images/screenshots/screenshot-mobile-1.png"><img src="images/screenshots/screenshot-mobile-1.png" alt="Every backlink shows its full folder path" width="270"></a>
-<a href="images/screenshots/screenshot-mobile-2.png"><img src="images/screenshots/screenshot-mobile-2.png" alt="Without the plugin: seven notes, all named Meeting" width="270"></a>
-<a href="images/screenshots/screenshot-mobile-3.png"><img src="images/screenshots/screenshot-mobile-3.png" alt="Show paths relative to a folder you choose" width="270"></a>
-<a href="images/screenshots/screenshot-mobile-4.png"><img src="images/screenshots/screenshot-mobile-4.png" alt="Trim long paths to the folder that matters" width="270"></a>
-<a href="images/screenshots/screenshot-mobile-5.png"><img src="images/screenshots/screenshot-mobile-5.png" alt="Or read the path outwards, file name first" width="270"></a>
+<div>
+<a href="https://github.com/mnaoumov/obsidian-backlink-full-path/blob/HEAD/images/screenshots/screenshot-desktop-2.png"><img src="images/screenshots/screenshot-desktop-2.png" alt="Without the plugin: seven notes, all named Meeting" width="600"></a>
+<a href="https://github.com/mnaoumov/obsidian-backlink-full-path/blob/HEAD/images/screenshots/screenshot-desktop-3.png"><img src="images/screenshots/screenshot-desktop-3.png" alt="Show paths relative to a folder you choose" width="600"></a>
+<a href="https://github.com/mnaoumov/obsidian-backlink-full-path/blob/HEAD/images/screenshots/screenshot-desktop-4.png"><img src="images/screenshots/screenshot-desktop-4.png" alt="Trim long paths to the folder that matters" width="600"></a>
+<a href="https://github.com/mnaoumov/obsidian-backlink-full-path/blob/HEAD/images/screenshots/screenshot-desktop-5.png"><img src="images/screenshots/screenshot-desktop-5.png" alt="Or read the path outwards, file name first" width="600"></a>
+<a href="https://github.com/mnaoumov/obsidian-backlink-full-path/blob/HEAD/images/screenshots/screenshot-mobile-1.png"><img src="images/screenshots/screenshot-mobile-1.png" alt="Every backlink shows its full folder path" width="270"></a>
+<a href="https://github.com/mnaoumov/obsidian-backlink-full-path/blob/HEAD/images/screenshots/screenshot-mobile-2.png"><img src="images/screenshots/screenshot-mobile-2.png" alt="Without the plugin: seven notes, all named Meeting" width="270"></a>
+<a href="https://github.com/mnaoumov/obsidian-backlink-full-path/blob/HEAD/images/screenshots/screenshot-mobile-3.png"><img src="images/screenshots/screenshot-mobile-3.png" alt="Show paths relative to a folder you choose" width="270"></a>
+<a href="https://github.com/mnaoumov/obsidian-backlink-full-path/blob/HEAD/images/screenshots/screenshot-mobile-4.png"><img src="images/screenshots/screenshot-mobile-4.png" alt="Trim long paths to the folder that matters" width="270"></a>
+<a href="https://github.com/mnaoumov/obsidian-backlink-full-path/blob/HEAD/images/screenshots/screenshot-mobile-5.png"><img src="images/screenshots/screenshot-mobile-5.png" alt="Or read the path outwards, file name first" width="270"></a>
+</div>
 
 </details>
 
@@ -34,11 +31,9 @@ This plugin shows each backlink's **full path** instead, so the list identifies 
 
 ## Demo vault
 
-**The documentation is a demo vault.** Every feature has a note that explains what it does and why you
-would want it, with three same-named notes already in place so the ambiguity is in front of you.
+**The documentation is a demo vault.** Every feature has a note that explains what it does and why you would want it, with three same-named notes already in place so the ambiguity is in front of you.
 
-**[Start reading here](<./demo-vault/00 Start.md>)** — it is plain markdown, so it works on GitHub with
-nothing installed.
+**[Start reading here](<./demo-vault/00 Start.md>)** — it is plain markdown, so it works on GitHub with nothing installed.
 
 A copy of the vault ships with every release. You can access it via any of the following:
 
@@ -48,11 +43,8 @@ A copy of the vault ships with every release. You can access it via any of the f
 
 ## What it does
 
-- **Full paths in the Backlinks pane**, so notes sharing a name are distinguishable — shown
-  side by side with Obsidian's default.
-  [01 Backlink full path](<./demo-vault/01 Backlink full path.md>)
-- **Every setting**, by the key it is stored under.
-  [02 Settings](<./demo-vault/02 Settings.md>)
+- **Full paths in the Backlinks pane**, so notes sharing a name are distinguishable — shown side by side with Obsidian's default. [01 Backlink full path](<./demo-vault/01 Backlink full path.md>)
+- **Every setting**, by the key it is stored under. [02 Settings](<./demo-vault/02 Settings.md>)
 
 ## Installation
 
