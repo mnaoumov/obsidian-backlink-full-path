@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 1.7.4
+
+- docs(demo-vault): unwrap the notes so Obsidian stops rendering a break per line
+- docs(readme): render the same in Obsidian's plugin page as on GitHub
+- chore: update libs
+- chore: update obsidian-dev-utils to 94.6.1
+- chore: update obsidian-dev-utils to 94.6.0
+- fix: override deepmerge-ts to clear GHSA-ggr8-5vv4-36mx
+- test: gate the demo vault by clicking every code button
+- chore: teach cspell the advisory wording
+- chore: update libs
+- docs(demo-vault): give the demo vault its code buttons
+- docs: show the screenshots in the README
+- docs: correct why the settings-tab shot is impossible
+- feat: caption every screenshot, and restore the before-shot
+- feat: shoot mobile natively at 900x1600 and drop the before-shot
+- feat: complete the mobile store screenshots
+- feat: add the store screenshot capture suites
+
 ## 1.7.3
 
 - docs: make the demo vault the documentation, in the standard layout
