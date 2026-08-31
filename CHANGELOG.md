@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 1.7.5
+
+- chore(deps): sweep caret-ranged dependencies to latest
+- fix(deps): move to obsidian-integration-testing 11 and drop the brace-expansion override
+- test(settings): retract the "settings modal cannot be opened" note
+- docs: point plugin-directory links at community.obsidian.md
+
 ## 1.7.4
 
 - docs(demo-vault): unwrap the notes so Obsidian stops rendering a break per line
