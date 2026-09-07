@@ -38,7 +38,7 @@ This plugin shows each backlink's **full path** instead, so the list identifies 
 A copy of the vault ships with every release. You can access it via any of the following:
 
 1. Running the **Backlink Full Path: Open demo vault** command.
-2. Downloading `backlink-full-path-demo-vault-<version>.zip` (`<version>` is the release version) from the [Releases](https://github.com/mnaoumov/obsidian-backlink-full-path/releases).
+2. Downloading `backlink-full-path-demo-vault.zip` from the [Releases](https://github.com/mnaoumov/obsidian-backlink-full-path/releases). It unzips into a single `backlink-full-path-demo-vault-<version>` folder.
 3. Browsing its source in [`demo-vault/`](./demo-vault/README.md) in this repository.
 
 ## What it does
