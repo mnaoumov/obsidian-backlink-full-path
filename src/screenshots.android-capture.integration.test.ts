@@ -170,7 +170,14 @@ beforeAll(async () => {
 
   setupDiagnostics = await evalInObsidian({
     async callback({ app, fontSizeInPixels, lib: { waitUntil }, subjectNotePath }) {
-      const SETTLE_TIMEOUT_IN_MILLISECONDS = 20_000;
+      /*
+       * Under the transport's ~30s per-closure cap, not at it.
+       * This wait, the render wait below and a settle share one budget, so at 20_000 apiece it declared 41.5s.
+       * The eval is killed at the cap first and reported as a bare transport timeout.
+       * That names the harness rather than the wait that overran.
+       * What is waited on here lands in well under a second, so the smaller ceiling costs nothing.
+       */
+      const SETTLE_TIMEOUT_IN_MILLISECONDS = 11_000;
       const SETTLE_DELAY_IN_MILLISECONDS = 1500;
       // Three from the demo vault plus the four staged above; waiting for the
       // Full set stops a shot being taken while the pane is still filling in.
@@ -180,7 +187,8 @@ beforeAll(async () => {
       // Caps around 30s — well below the harness's own timeouts. A longer wait
       // In here dies as an opaque `script timeout` rather than as a readable
       // Assertion failure, so keep every in-closure wait comfortably under it.
-      const RENDER_TIMEOUT_IN_MILLISECONDS = 20_000;
+      // Sized with the settle wait above, whose comment explains the shared budget.
+      const RENDER_TIMEOUT_IN_MILLISECONDS = 11_000;
 
       app.changeTheme('obsidian');
 
