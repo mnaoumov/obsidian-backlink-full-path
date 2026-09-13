@@ -20,7 +20,7 @@ describe('Smoke test', () => {
   it('should open its settings tab', async () => {
     // `tabId` is required. `app.setting.open()` on its own restores the profile's
     // Last opened tab, and a harness-owned profile has never opened one, so the
-    // Modal renders zero rows. See obsidian-integration-testing AGENTS.md L38.
+    // Modal renders zero rows. The harness documents the recipe under `openObsidianSettingsTab`.
     const settingNames = await openObsidianSettingsTab({ tabId: PLUGIN_ID });
 
     expect(settingNames).toContain('Path depth');

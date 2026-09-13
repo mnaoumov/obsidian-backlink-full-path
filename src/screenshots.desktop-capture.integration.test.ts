@@ -28,7 +28,7 @@
  * proof the modal could not be opened at all. The missing step is that
  * `containerEl` must be attached to the document BEFORE `open()`, never after.
  * The harness owns that recipe — `openObsidianSettingsTab({ tabId })`, described
- * in obsidian-integration-testing's AGENTS.md L38 and exercised by
+ * in obsidian-integration-testing's AGENTS.md and exercised by
  * `plugin.desktop.integration.test.ts`. Reach for it rather than reviving the
  * note.
  *
