@@ -1,8 +1,8 @@
 /**
  * @file
  *
- * Produces the five mobile screenshots the community-store listing needs
- * (T461-P21), driving the demo vault's fixtures in Obsidian Mobile on a real
+ * Produces the five mobile screenshots the community-store listing needs,
+ * driving the demo vault's fixtures in Obsidian Mobile on a real
  * Android emulator and writing `images/screenshots/screenshot-mobile-N.png`.
  *
  * The mobile counterpart of the desktop capture suite, showing the same five
@@ -28,8 +28,8 @@
  *   WebView the Appium session is attached to; every later call dies with
  *   `no such window: target window already closed`.
  *
- * The screenshot AVD needs ONE-TIME provisioning and both steps are non-obvious
- * — see [[T461-P21]]. The harness never installs the Obsidian APK, and because
+ * The screenshot AVD needs ONE-TIME provisioning and both steps are non-obvious.
+ * The harness never installs the Obsidian APK, and because
  * it launches emulators with `-no-snapshot-save`, an install performed under
  * that flag is silently discarded. Installing is also not sufficient on its own:
  * Obsidian's first-run onboarding has to be completed by hand once, or

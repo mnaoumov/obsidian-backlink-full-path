@@ -1,8 +1,8 @@
 /**
  * @file
  *
- * Produces the five desktop screenshots the community-store listing needs
- * (T461-P21), driving the demo vault's fixtures in a real Obsidian and writing
+ * Produces the five desktop screenshots the community-store listing needs,
+ * driving the demo vault's fixtures in a real Obsidian and writing
  * `images/screenshots/screenshot-desktop-N.png`.
  *
  * This is a capture script rather than an assertion suite: it runs in the
@@ -19,9 +19,9 @@
  * before captions existed.
  *
  * There is no settings-tab shot, and the reason is editorial rather than
- * technical: [[T461-P21]] allows five slots and rules that settings earn one
- * only where the settings themselves are the feature. The five below are five
- * distinct capabilities, and the renderings are the feature.
+ * technical: the listing has five slots, and settings earn one only where the
+ * settings themselves are the feature. The five below are five distinct
+ * capabilities, and the renderings are the feature.
  *
  * A settings shot IS obtainable, and an earlier version of this note said the
  * opposite: `app.setting.open()` renders nothing on its own, which was read as

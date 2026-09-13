@@ -67,8 +67,8 @@
 - docs: standardize demo-vault README
 - docs: drop per-plugin demo-vault setup notes (bootstrap covered by ODU harness)
 - docs: unnumber demo-vault setup notes
-- Merge branch 'T107-renumber': number Backlink Full Path demo vault example notes (S2)
-- Merge branch 'T107': create the Backlink Full Path demo vault (S2)
+- docs(demo-vault): number Backlink Full Path demo vault example notes
+- docs(demo-vault): create the Backlink Full Path demo vault
 - chore: update libs
 - docs: update
 - docs: migrate to AGENTS.md
