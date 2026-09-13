@@ -169,7 +169,7 @@ beforeAll(async () => {
       const BACKLINK_COUNT = 7;
       const BACKLINKS_PANE_WIDTH_IN_PIXELS = 560;
 
-      // The whole fleet is shot in the default DARK theme so the sets read as one
+      // The author's plugins are all shot in the default DARK theme so the sets read as one
       // Series (`moonstone` is the light one). Spelled inline rather than passed
       // Via `input`, because `changeTheme` takes a literal union that a
       // Serialized string would widen away.
