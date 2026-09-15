@@ -159,7 +159,7 @@ beforeAll(async () => {
   const vault = getTemporaryVault();
 
   // Only the `Materials/` fixtures — see the desktop suite for why the demo
-  // Vault's own documentation notes are left out.
+  // vault's own documentation notes are left out.
   const demoVaultFiles = buildDemoVaultPopulate({ demoVaultPath: DEMO_VAULT_PATH });
   const fixtures = Object.fromEntries(
     Object.entries(demoVaultFiles).filter(([path]) => path.startsWith('Materials/'))
@@ -180,13 +180,13 @@ beforeAll(async () => {
       const SETTLE_TIMEOUT_IN_MILLISECONDS = 11_000;
       const SETTLE_DELAY_IN_MILLISECONDS = 1500;
       // Three from the demo vault plus the four staged above; waiting for the
-      // Full set stops a shot being taken while the pane is still filling in.
+      // full set stops a shot being taken while the pane is still filling in.
       const BACKLINK_COUNT = 7;
 
       // A closure runs inside ONE Appium `execute/sync` call, which WebDriver
-      // Caps around 30s — well below the harness's own timeouts. A longer wait
-      // In here dies as an opaque `script timeout` rather than as a readable
-      // Assertion failure, so keep every in-closure wait comfortably under it.
+      // caps around 30s — well below the harness's own timeouts. A longer wait
+      // in here dies as an opaque `script timeout` rather than as a readable
+      // assertion failure, so keep every in-closure wait comfortably under it.
       // Sized with the settle wait above, whose comment explains the shared budget.
       const RENDER_TIMEOUT_IN_MILLISECONDS = 11_000;
 
@@ -216,27 +216,27 @@ beforeAll(async () => {
       });
 
       // On a phone the backlinks live in a drawer that opens OVER the note, so
-      // The drawer has to be expanded for the pane to be in frame at all.
+      // the drawer has to be expanded for the pane to be in frame at all.
       app.workspace.rightSplit.expand();
 
       // Slightly bigger type, because a 900x1600 listing image is read as a
       // THUMBNAIL. Not much bigger: the paths are long, and past ~18px the
-      // Entry titles start wrapping mid-word, which reads as a rendering bug.
+      // entry titles start wrapping mid-word, which reads as a rendering bug.
       app.vault.setConfig('baseFontSize', fontSizeInPixels);
       const fontApp: unknown = app;
       (fontApp as FontSizeApp).updateFontSize();
 
       // The note's own `# Shared topic` heading already titles it, so Obsidian's
-      // Inline title renders the name twice. `updateOptions` does NOT pick this
-      // Up — the setting is applied by toggling a class on `document.body`.
+      // inline title renders the name twice. `updateOptions` does NOT pick this
+      // up — the setting is applied by toggling a class on `document.body`.
       app.vault.setConfig('showInlineTitle', false);
       (fontApp as InlineTitleApp).updateInlineTitleDisplay();
 
       // Context excerpts OFF, exactly as on desktop. Turning them on to fill a
-      // Phone frame was tried and is much worse: the excerpts are the notes'
-      // Raw markdown, so `[Shared topic](<../../Shared topic.md>)` in yellow
-      // Highlight becomes the largest thing in the image. The frame is filled
-      // Instead by staging MORE same-named notes — see the populate map above.
+      // phone frame was tried and is much worse: the excerpts are the notes'
+      // raw markdown, so `[Shared topic](<../../Shared topic.md>)` in yellow
+      // highlight becomes the largest thing in the image. The frame is filled
+      // instead by staging MORE same-named notes — see the populate map above.
       const backlinkView: unknown = app.workspace.getLeavesOfType('backlink')[0]?.view;
       const backlinks = (backlinkView as BacklinkPaneView | null)?.backlink;
       backlinks?.setExtraContext(false);
@@ -257,8 +257,8 @@ beforeAll(async () => {
 describe('mobile store screenshots', () => {
   it('renders the backlinks pane the shots are framed on', () => {
     // Surfaced as an assertion because vitest swallows console output from an
-    // Integration worker, and a silently-wrong layout produces five bad images
-    // Without a single failure — which is exactly what happened once.
+    // integration worker, and a silently-wrong layout produces five bad images
+    // without a single failure — which is exactly what happened once.
     expect(setupDiagnostics).toMatchObject({ hasBacklinkComponent: true });
   });
 
@@ -269,8 +269,8 @@ describe('mobile store screenshots', () => {
 
   it('2 - the same pane without the plugin, for contrast', async () => {
     // A before-shot is only safe BECAUSE of the caption. A listing carousel
-    // Shows screenshots one at a time, so an unlabelled one reads as a picture
-    // Of what the plugin does, not of what it fixes.
+    // shows screenshots one at a time, so an unlabelled one reads as a picture
+    // of what the plugin does, not of what it fixes.
     await setPluginEnabled(false);
     await shoot(2, 'Without the plugin: seven notes, all named Meeting');
     await setPluginEnabled(true);
@@ -284,8 +284,8 @@ describe('mobile store screenshots', () => {
 
   it('4 - pathDepth trims deep paths to the folder that matters', async () => {
     // The depth counts the FILE NAME too, so 2 keeps exactly one folder. Depth 1
-    // Keeps none, rendering identical trimmed rows — the very confusion this
-    // Plugin exists to remove, which is no way to sell it.
+    // keeps none, rendering identical trimmed rows — the very confusion this
+    // plugin exists to remove, which is no way to sell it.
     await setSettings({ pathDepth: 2, shouldDisplayParentPathOnSeparateLine: false });
     await shoot(4, 'Trim long paths to the folder that matters');
   });
@@ -336,7 +336,7 @@ async function setPluginEnabled(isEnabled: boolean): Promise<void> {
 
       // Toggling the plugin closes the drawer, so the pane has to be re-opened
       // AND re-expanded — otherwise the shot is a picture of the note, showing
-      // No backlinks at all, which demonstrates nothing.
+      // no backlinks at all, which demonstrates nothing.
       app.commands.executeCommandById('backlink:open');
       app.workspace.rightSplit.expand();
       await sleep(SETTLE_DELAY_IN_MILLISECONDS);
@@ -386,17 +386,17 @@ async function shoot(index: number, caption: string): Promise<void> {
   const captured = await captureObsidianScreenshot({ vaultPath: vaultPath() });
 
   // The AVD is 900x1600, so the device frame IS the store's size — no crop, no
-  // Rescale, no letterbox. Asserting it here is what keeps that true: run this
-  // Against any other AVD and it fails loudly instead of quietly shipping an
-  // Off-spec image.
+  // rescale, no letterbox. Asserting it here is what keeps that true: run this
+  // against any other AVD and it fails loudly instead of quietly shipping an
+  // off-spec image.
   expect(readPngDimensions(captured)).toStrictEqual({
     heightInPixels: HEIGHT_IN_PIXELS,
     widthInPixels: WIDTH_IN_PIXELS
   });
 
   // Captioned AFTER capture, so the frame stays an untouched device screenshot
-  // And rewording a label needs no re-shoot. The band also covers the sync
-  // Indicator and word count, which are chrome rather than content.
+  // and rewording a label needs no re-shoot. The band also covers the sync
+  // indicator and word count, which are chrome rather than content.
   const labeled = await labelScreenshot(captured, { text: caption });
 
   mkdirSync(IMAGES_DIRECTORY, { recursive: true });
