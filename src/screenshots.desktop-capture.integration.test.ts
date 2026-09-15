@@ -143,10 +143,10 @@ beforeAll(async () => {
   const vault = getTemporaryVault();
 
   // Only the `Materials/` fixtures — the three `Meeting` notes and the note they
-  // All link to. The demo vault's own documentation notes (`00 Start`,
+  // all link to. The demo vault's own documentation notes (`00 Start`,
   // `01 Backlink full path`, `02 Settings`) ALSO link to the subject note, so
-  // Shipping the whole vault floods the Backlinks pane with documentation and
-  // Pushes the three `Meeting` notes — the entire demonstration — off the frame.
+  // shipping the whole vault floods the Backlinks pane with documentation and
+  // pushes the three `Meeting` notes — the entire demonstration — off the frame.
   const demoVaultFiles = buildDemoVaultPopulate({ demoVaultPath: DEMO_VAULT_PATH });
   const fixtures = Object.fromEntries(
     Object.entries(demoVaultFiles).filter(([path]) => path.startsWith('Materials/'))
@@ -170,9 +170,9 @@ beforeAll(async () => {
       const BACKLINKS_PANE_WIDTH_IN_PIXELS = 560;
 
       // The author's plugins are all shot in the default DARK theme so the sets read as one
-      // Series (`moonstone` is the light one). Spelled inline rather than passed
-      // Via `input`, because `changeTheme` takes a literal union that a
-      // Serialized string would widen away.
+      // series (`moonstone` is the light one). Spelled inline rather than passed
+      // via `input`, because `changeTheme` takes a literal union that a
+      // serialized string would widen away.
       app.changeTheme('obsidian');
 
       const backlinkPlugin = app.internalPlugins.getPluginById('backlink');
@@ -199,14 +199,14 @@ beforeAll(async () => {
       });
 
       // Frame the shot on the feature. The file explorer and a half-empty editor
-      // Otherwise take most of a 1200x800 frame while the paths — the thing being
-      // Sold — sit in a narrow strip on the right.
+      // otherwise take most of a 1200x800 frame while the paths — the thing being
+      // sold — sit in a narrow strip on the right.
       app.workspace.leftSplit.collapse();
       const rightSplit: unknown = app.workspace.rightSplit;
       (rightSplit as ResizableSideDock).setSize(BACKLINKS_PANE_WIDTH_IN_PIXELS);
 
       // The note's own `# Shared topic` heading already titles it, so Obsidian's
-      // Inline title renders the name twice.
+      // inline title renders the name twice.
       app.vault.setConfig('showInlineTitle', false);
       const inlineTitleApp: unknown = app;
       (inlineTitleApp as InlineTitleApp).updateInlineTitleDisplay();
@@ -234,8 +234,8 @@ describe('desktop store screenshots', () => {
 
   it('2 - the same pane without the plugin, for contrast', async () => {
     // A before-shot is only safe BECAUSE of the caption. A listing carousel
-    // Shows screenshots one at a time, so an unlabelled one reads as a picture
-    // Of what the plugin does, not of what it fixes.
+    // shows screenshots one at a time, so an unlabelled one reads as a picture
+    // of what the plugin does, not of what it fixes.
     await setPluginEnabled(false);
     await shoot(2, 'Without the plugin: seven notes, all named Meeting');
     await setPluginEnabled(true);
@@ -249,8 +249,8 @@ describe('desktop store screenshots', () => {
 
   it('4 - pathDepth trims deep paths to the folder that matters', async () => {
     // The depth counts the FILE NAME too, so 2 keeps exactly one folder. Depth 1
-    // Keeps none, rendering identical trimmed rows — the very confusion this
-    // Plugin exists to remove, which is no way to sell it.
+    // keeps none, rendering identical trimmed rows — the very confusion this
+    // plugin exists to remove, which is no way to sell it.
     await setSettings({ pathDepth: 2, shouldDisplayParentPathOnSeparateLine: false });
     await shoot(4, 'Trim long paths to the folder that matters');
   });
@@ -350,8 +350,8 @@ async function shoot(index: number, caption: string): Promise<void> {
   });
 
   // Captioned AFTER capture, so the frame stays an untouched Obsidian window and
-  // Rewording a label needs no re-shoot. The band covers the status bar, which
-  // Is chrome rather than content.
+  // rewording a label needs no re-shoot. The band covers the status bar, which
+  // is chrome rather than content.
   const labeled = await labelScreenshot(bytes, { text: caption });
 
   expect(readPngDimensions(labeled)).toStrictEqual({
