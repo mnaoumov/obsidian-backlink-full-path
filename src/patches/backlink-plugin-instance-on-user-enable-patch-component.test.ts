@@ -16,7 +16,7 @@ import type { BacklinkFullPathComponent } from '../backlink-full-path-component.
 import { BacklinkPluginInstanceOnUserEnablePatchComponent } from './backlink-plugin-instance-on-user-enable-patch-component.ts';
 
 interface BacklinkPluginInstancePrototype {
-  onUserEnable(): void;
+  onUserEnable: () => void;
 }
 
 describe('BacklinkPluginInstanceOnUserEnablePatchComponent', () => {

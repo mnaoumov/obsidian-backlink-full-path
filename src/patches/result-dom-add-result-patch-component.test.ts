@@ -21,7 +21,7 @@ import { PluginSettings } from '../plugin-settings.ts';
 import { ResultDomAddResultPatchComponent } from './result-dom-add-result-patch-component.ts';
 
 interface ResultDomPrototype {
-  addResult(file: TFile, result: ResultDomResult, content: string, shouldShowTitle: boolean): ResultDomItem;
+  addResult: (file: TFile, result: ResultDomResult, content: string, shouldShowTitle: boolean) => ResultDomItem;
 }
 
 describe('ResultDomAddResultPatchComponent', () => {

@@ -26,10 +26,10 @@ import { ResultDomAddResultPatchComponent } from './patches/result-dom-add-resul
 import { PluginSettings } from './plugin-settings.ts';
 
 interface ComponentInternals {
-  getBacklinkView(): Promise<BacklinkView | null>;
-  patchBacklinksPane(): Promise<void>;
-  refreshBacklinkPanels(): Promise<void>;
-  reloadBacklinksView(): Promise<void>;
+  getBacklinkView: () => Promise<BacklinkView | null>;
+  patchBacklinksPane: () => Promise<void>;
+  refreshBacklinkPanels: () => Promise<void>;
+  reloadBacklinksView: () => Promise<void>;
 }
 
 interface CorePlugin {
