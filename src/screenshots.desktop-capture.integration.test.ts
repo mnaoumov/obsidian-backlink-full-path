@@ -62,8 +62,8 @@ import {
  * The slice of Obsidian's backlink pane this storyboard drives.
  */
 interface BacklinkPaneComponent {
-  setCollapseAll(this: void, isCollapsed: boolean): void;
-  setExtraContext(this: void, hasExtraContext: boolean): void;
+  setCollapseAll: (this: void, isCollapsed: boolean) => void;
+  setExtraContext: (this: void, hasExtraContext: boolean) => void;
 }
 
 /**
@@ -78,7 +78,7 @@ interface BacklinkPaneView {
  * declare.
  */
 interface InlineTitleApp {
-  updateInlineTitleDisplay(this: void): void;
+  updateInlineTitleDisplay: (this: void) => void;
 }
 
 /**
@@ -86,14 +86,14 @@ interface InlineTitleApp {
  * the desktop side dock OR the mobile drawer, and only the side dock resizes.
  */
 interface ResizableSideDock {
-  setSize(this: void, size: number): void;
+  setSize: (this: void, size: number) => void;
 }
 
 /**
  * The settings component's editor entry point.
  */
 interface SettingsEditableComponent {
-  editAndSave(this: void, settingsEditor: (settings: Record<string, unknown>) => void): Promise<void>;
+  editAndSave: (this: void, settingsEditor: (settings: Record<string, unknown>) => void) => Promise<void>;
 }
 
 /**

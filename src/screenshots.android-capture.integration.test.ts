@@ -62,8 +62,8 @@ import {
  * The slice of Obsidian's backlink pane this storyboard drives.
  */
 interface BacklinkPaneComponent {
-  setCollapseAll(this: void, isCollapsed: boolean): void;
-  setExtraContext(this: void, hasExtraContext: boolean): void;
+  setCollapseAll: (this: void, isCollapsed: boolean) => void;
+  setExtraContext: (this: void, hasExtraContext: boolean) => void;
 }
 
 /**
@@ -78,21 +78,21 @@ interface BacklinkPaneView {
  * declare. Setting `baseFontSize` alone changes nothing on screen.
  */
 interface FontSizeApp {
-  updateFontSize(this: void): void;
+  updateFontSize: (this: void) => void;
 }
 
 /**
  * `App`, reduced to the inline-title applier, likewise undeclared.
  */
 interface InlineTitleApp {
-  updateInlineTitleDisplay(this: void): void;
+  updateInlineTitleDisplay: (this: void) => void;
 }
 
 /**
  * The settings component's editor entry point.
  */
 interface SettingsEditableComponent {
-  editAndSave(this: void, settingsEditor: (settings: Record<string, unknown>) => void): Promise<void>;
+  editAndSave: (this: void, settingsEditor: (settings: Record<string, unknown>) => void) => Promise<void>;
 }
 
 /**
