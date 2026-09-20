@@ -25,16 +25,36 @@
  *
  * A settings shot IS obtainable, and an earlier version of this note said the
  * opposite: `app.setting.open()` renders nothing on its own, which was read as
- * proof the modal could not be opened at all. The missing step is that
- * `containerEl` must be attached to the document BEFORE `open()`, never after.
- * The harness owns that recipe — `openObsidianSettingsTab({ tabId })`, described
- * in obsidian-integration-testing's AGENTS.md and exercised by
- * `plugin.desktop.integration.test.ts`. Reach for it rather than reviving the
- * note.
+ * proof the modal could not be opened at all. The observation was right and the
+ * conclusion was not — and neither was the cause this note then gave, which
+ * blamed a `containerEl` that `open()` never attaches. The real mechanism is
+ * the settings POPOUT: `app.setting` is popout-capable, Obsidian ships the
+ * vault config key `settingsPopoutWindow` as `true`, and on desktop `open()`
+ * therefore builds the modal in a SECOND Electron window — leaving the driven
+ * document with nothing while returning without throwing. Turn that key off and
+ * `open()` attaches `containerEl` to the driven document itself.
  *
- * The extra step is specific to the SETTINGS modal. Ordinary modals open
- * normally under the same conditions — `new Modal(app).open()` attaches and
- * renders — so a plugin whose feature IS a modal needs none of it.
+ * Nothing in this repo has to turn it off. Every vault the harness's global
+ * setup provisions — the one `getTemporaryVault()` hands these suites — already
+ * carries `settingsPopoutWindow: false`, which is why the bare
+ * `openObsidianSettingsTab({ tabId })` call in
+ * `plugin.desktop.integration.test.ts` reads real setting rows back with no
+ * setup of its own. That helper is the recipe, described in
+ * obsidian-integration-testing's AGENTS.md; reach for it rather than reviving
+ * the note.
+ *
+ * The pre-attach the helper still does — appending `containerEl` to
+ * `document.body` before `open()`, never after — is a FLOOR rather than the
+ * fix. It matters only for a vault that does not carry that default, and it
+ * would not be enough for a shot anyway: it keeps `containerEl` reachable as an
+ * object, while a capture frames THIS window and a popout leaves this window
+ * empty. Only the vault-level default makes a settings shot possible.
+ *
+ * All of this is specific to the SETTINGS modal, because `settingsPopoutWindow`
+ * is a settings-only key and `app.setting` is the only thing that consults it.
+ * Ordinary modals open in the driven document either way — `new Modal(app)`
+ * followed by `open()` attaches and renders — so a plugin whose feature IS a
+ * modal needs none of it.
  */
 
 import {
