@@ -1,4 +1,5 @@
 import type { BacklinkView } from '@obsidian-typings/obsidian-public-latest';
+import type { BacklinkComponent } from '@obsidian-typings/obsidian-public-latest/implementations';
 import type {
   App,
   TFile,
@@ -26,9 +27,11 @@ import { ResultDomAddResultPatchComponent } from './patches/result-dom-add-resul
 import { PluginSettings } from './plugin-settings.ts';
 
 interface ComponentInternals {
+  getBacklinkComponent: () => Promise<BacklinkComponent | null>;
   getBacklinkView: () => Promise<BacklinkView | null>;
   onBacklinksCorePluginEnable: () => void;
-  patchBacklinksPane: () => Promise<void>;
+  patchBacklinksPane: () => Promise<boolean>;
+  patchLateBacklinks: () => Promise<void>;
   refreshBacklinkPanels: () => Promise<void>;
   reloadBacklinksView: () => Promise<void>;
 }
@@ -51,6 +54,8 @@ interface TestContext {
   markdownLeaves: WorkspaceLeaf[];
   on: ReturnType<typeof vi.fn>;
   triggerChange: () => void;
+  triggerLayoutChange: () => void;
+  workspaceOn: ReturnType<typeof vi.fn>;
 }
 
 describe('BacklinkFullPathComponent', () => {
@@ -79,7 +84,7 @@ describe('BacklinkFullPathComponent', () => {
 
     it('should not patch the pane when the backlinks core plugin is not found', async () => {
       context.getPluginById.mockReturnValue(undefined);
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
 
       await triggerLayoutReady();
 
@@ -88,7 +93,7 @@ describe('BacklinkFullPathComponent', () => {
 
     it('should subscribe to internal plugin changes when the core plugin is found', async () => {
       context.getPluginById.mockReturnValue(createCorePlugin(false));
-      vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+      vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
 
       await triggerLayoutReady();
 
@@ -98,7 +103,7 @@ describe('BacklinkFullPathComponent', () => {
     it('should patch the pane when the core plugin becomes enabled', async () => {
       const corePlugin = createCorePlugin(false);
       context.getPluginById.mockReturnValue(corePlugin);
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
 
       await triggerLayoutReady();
       corePlugin.enabled = true;
@@ -110,7 +115,7 @@ describe('BacklinkFullPathComponent', () => {
     it('should patch the pane once per enable, not on every change', async () => {
       const corePlugin = createCorePlugin(false);
       context.getPluginById.mockReturnValue(corePlugin);
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
 
       await triggerLayoutReady();
       corePlugin.enabled = true;
@@ -123,7 +128,7 @@ describe('BacklinkFullPathComponent', () => {
     it('should not patch the pane when the core plugin becomes disabled', async () => {
       const corePlugin = createCorePlugin(true);
       context.getPluginById.mockReturnValue(corePlugin);
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
       vi.spyOn(internals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
 
       await triggerLayoutReady();
@@ -136,7 +141,7 @@ describe('BacklinkFullPathComponent', () => {
 
     it('should patch the pane and refresh panels when the plugin is enabled', async () => {
       context.getPluginById.mockReturnValue(createCorePlugin(true));
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
       const refreshSpy = vi.spyOn(internals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
 
       await triggerLayoutReady();
@@ -147,7 +152,7 @@ describe('BacklinkFullPathComponent', () => {
 
     it('should not patch the pane when the plugin is disabled', async () => {
       context.getPluginById.mockReturnValue(createCorePlugin(false));
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
 
       await triggerLayoutReady();
 
@@ -166,11 +171,91 @@ describe('BacklinkFullPathComponent', () => {
 
       expect(refreshSpy).toHaveBeenCalled();
     });
+
+    it('should retry the patch on a layout change while the core plugin is enabled and nothing is patched', async () => {
+      context.getPluginById.mockReturnValue(createCorePlugin(true));
+      vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
+      vi.spyOn(internals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
+      const patchLateSpy = vi.spyOn(internals(context.component), 'patchLateBacklinks').mockResolvedValue(undefined);
+
+      await triggerLayoutReady();
+      context.triggerLayoutChange();
+
+      expect(context.workspaceOn).toHaveBeenCalledWith('layout-change', expect.any(Function));
+      expect(patchLateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not retry the patch on a layout change while the core plugin is disabled', async () => {
+      context.getPluginById.mockReturnValue(createCorePlugin(false));
+      const patchLateSpy = vi.spyOn(internals(context.component), 'patchLateBacklinks').mockResolvedValue(undefined);
+
+      await triggerLayoutReady();
+      context.triggerLayoutChange();
+
+      expect(patchLateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not retry the patch on a layout change once it is installed', async () => {
+      context.getPluginById.mockReturnValue(createCorePlugin(true));
+      pushPatchableBacklinkView();
+      vi.spyOn(internals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
+      const patchLateSpy = vi.spyOn(internals(context.component), 'patchLateBacklinks').mockResolvedValue(undefined);
+
+      await triggerLayoutReady();
+      context.triggerLayoutChange();
+
+      expect(patchLateSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('patchLateBacklinks', () => {
+    it('should refresh the panels when the patch was installed now', async () => {
+      vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(true);
+      const refreshSpy = vi.spyOn(internals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
+
+      await internals(context.component).patchLateBacklinks();
+
+      expect(refreshSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not refresh the panels when nothing was patched', async () => {
+      vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
+      const refreshSpy = vi.spyOn(internals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
+
+      await internals(context.component).patchLateBacklinks();
+
+      expect(refreshSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getBacklinkComponent', () => {
+    it('should return the pane backlinks when the pane exists', async () => {
+      const backlink = strictProxy<BacklinkComponent>({});
+      context.backlinkLeaves.push(castTo<WorkspaceLeaf>({
+        loadIfDeferred: vi.fn().mockResolvedValue(undefined),
+        view: strictProxy<BacklinkView>({ backlink })
+      }));
+
+      await expect(internals(context.component).getBacklinkComponent()).resolves.toBe(backlink);
+    });
+
+    it('should fall back to the first in-document backlinks when the pane is closed', async () => {
+      const backlinks = strictProxy<BacklinkComponent>({});
+      context.markdownLeaves.push(castTo<WorkspaceLeaf>({ view: {} }), createMarkdownLeaf(null), createMarkdownLeaf(backlinks));
+
+      await expect(internals(context.component).getBacklinkComponent()).resolves.toBe(backlinks);
+    });
+
+    it('should return null when neither the pane nor in-document backlinks exist', async () => {
+      context.markdownLeaves.push(createMarkdownLeaf(null));
+
+      await expect(internals(context.component).getBacklinkComponent()).resolves.toBeNull();
+    });
   });
 
   describe('onBacklinksCorePluginEnable', () => {
     it('should patch the backlinks pane', () => {
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
 
       internals(context.component).onBacklinksCorePluginEnable();
 
@@ -332,6 +417,18 @@ describe('BacklinkFullPathComponent', () => {
     }));
   }
 
+  function pushPatchableBacklinkView(): void {
+    const backlinkView = strictProxy<BacklinkView>({
+      backlink: strictProxy({
+        backlinkDom: Object.create({ addResult: vi.fn() })
+      })
+    });
+    context.backlinkLeaves.push(castTo<WorkspaceLeaf>({
+      loadIfDeferred: vi.fn().mockResolvedValue(undefined),
+      view: backlinkView
+    }));
+  }
+
   async function triggerLayoutReady(): Promise<void> {
     vi.useFakeTimers();
     context.component.load();
@@ -360,6 +457,7 @@ function createTestContext(): TestContext {
   const getPluginById = vi.fn();
   const internalPluginsOn = vi.fn().mockReturnValue({});
   const on = vi.fn();
+  const workspaceOn = vi.fn().mockReturnValue({});
 
   const app = strictProxy<App>({
     internalPlugins: {
@@ -376,6 +474,7 @@ function createTestContext(): TestContext {
         }
         return [];
       }),
+      on: workspaceOn,
       onLayoutReady: vi.fn().mockImplementation((callback: () => void) => {
         callback();
       })
@@ -402,7 +501,11 @@ function createTestContext(): TestContext {
     on,
     triggerChange: (): void => {
       castTo<() => void>(internalPluginsOn.mock.calls[0]?.[1])();
-    }
+    },
+    triggerLayoutChange: (): void => {
+      castTo<() => void>(workspaceOn.mock.calls.find(([name]) => name === 'layout-change')?.[1])();
+    },
+    workspaceOn
   };
 }
 
