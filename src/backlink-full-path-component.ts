@@ -9,7 +9,6 @@ import { MarkdownView } from 'obsidian';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
 import { LayoutReadyComponent } from 'obsidian-dev-utils/obsidian/components/layout-ready-component';
 
-import { BacklinkPluginInstanceOnUserEnablePatchComponent } from './patches/backlink-plugin-instance-on-user-enable-patch-component.ts';
 import { ResultDomAddResultPatchComponent } from './patches/result-dom-add-result-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 
@@ -27,10 +26,6 @@ export class BacklinkFullPathComponent extends LayoutReadyComponent {
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
 
-  public onBacklinksCorePluginEnable(): void {
-    invokeAsyncSafely(() => this.patchBacklinksPane());
-  }
-
   protected override async onLayoutReady(): Promise<void> {
     this.pluginSettingsComponent.on('saveSettings', async () => {
       await this.refreshBacklinkPanels();
@@ -41,12 +36,23 @@ export class BacklinkFullPathComponent extends LayoutReadyComponent {
       return;
     }
 
-    this.addChild(
-      new BacklinkPluginInstanceOnUserEnablePatchComponent({
-        backlinkFullPathComponent: this,
-        backlinkPluginInstance: backlinksCorePlugin.instance
-      })
-    );
+    /*
+     * Obsidian publishes this itself: `InternalPlugin.enable()` sets `enabled` as its first statement and
+     * raises `change` on the manager as its last, and `disable()` mirrors that, so the flag read inside the
+     * handler is always the post-transition one. Obsidian's own Core plugins settings tab listens to the
+     * same signal. Diffing it replaces a monkey patch of `onUserEnable` on the `BacklinkPluginInstance`
+     * prototype, which every vault shares.
+     */
+    let wasBacklinksCorePluginEnabled = backlinksCorePlugin.enabled;
+    this.registerEvent(this.app.internalPlugins.on('change', () => {
+      const isBacklinksCorePluginEnabled = backlinksCorePlugin.enabled;
+      const hasBacklinksCorePluginJustBeenEnabled = isBacklinksCorePluginEnabled && !wasBacklinksCorePluginEnabled;
+      wasBacklinksCorePluginEnabled = isBacklinksCorePluginEnabled;
+
+      if (hasBacklinksCorePluginJustBeenEnabled) {
+        this.onBacklinksCorePluginEnable();
+      }
+    }));
 
     if (backlinksCorePlugin.enabled) {
       await this.patchBacklinksPane();
@@ -68,6 +74,10 @@ export class BacklinkFullPathComponent extends LayoutReadyComponent {
 
     await backlinksLeaf.loadIfDeferred();
     return backlinksLeaf.view as BacklinkView;
+  }
+
+  private onBacklinksCorePluginEnable(): void {
+    invokeAsyncSafely(() => this.patchBacklinksPane());
   }
 
   private async patchBacklinksPane(): Promise<void> {
