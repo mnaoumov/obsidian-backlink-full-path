@@ -1,4 +1,5 @@
 import type { BacklinkView } from '@obsidian-typings/obsidian-public-latest';
+import type { BacklinkComponent } from '@obsidian-typings/obsidian-public-latest/implementations';
 import type { App } from 'obsidian';
 
 import {
@@ -55,6 +56,19 @@ export class BacklinkFullPathComponent extends LayoutReadyComponent {
       }
     }));
 
+    /*
+     * The load and the enable are not the only moments a backlinks component can first appear: with the core plugin
+     * enabled but its pane closed, there is nothing to patch at load, and opening the pane later raises no `change`.
+     * Measured in a real Obsidian 1.14.2, that left the plugin inert until a restart with the pane open. Opening a
+     * pane or a note changes the layout, so retry there until the patch is in; the once-guard in
+     * `patchBacklinksPane` makes every later event a no-op.
+     */
+    this.registerEvent(this.app.workspace.on('layout-change', () => {
+      if (backlinksCorePlugin.enabled && !this.isBacklinksPanePatched) {
+        invokeAsyncSafely(() => this.patchLateBacklinks());
+      }
+    }));
+
     if (backlinksCorePlugin.enabled) {
       await this.patchBacklinksPane();
       await this.refreshBacklinkPanels();
@@ -65,6 +79,22 @@ export class BacklinkFullPathComponent extends LayoutReadyComponent {
         await this.refreshBacklinkPanels();
       });
     });
+  }
+
+  private async getBacklinkComponent(): Promise<BacklinkComponent | null> {
+    const backlinkView = await this.getBacklinkView();
+    if (backlinkView) {
+      return backlinkView.backlink;
+    }
+
+    // In-document backlinks are the same class as the pane's, so either one reaches the shared prototype.
+    for (const leaf of this.app.workspace.getLeavesOfType(ViewType.Markdown)) {
+      if (leaf.view instanceof MarkdownView && leaf.view.backlinks) {
+        return leaf.view.backlinks;
+      }
+    }
+
+    return null;
   }
 
   private async getBacklinkView(): Promise<BacklinkView | null> {
@@ -81,8 +111,8 @@ export class BacklinkFullPathComponent extends LayoutReadyComponent {
     invokeAsyncSafely(() => this.patchBacklinksPane());
   }
 
-  private async patchBacklinksPane(): Promise<void> {
-    const backlinkView = await this.getBacklinkView();
+  private async patchBacklinksPane(): Promise<boolean> {
+    const backlinkComponent = await this.getBacklinkComponent();
 
     /*
      * Install the patch once. It sits on the `ResultDom` prototype, which outlives the pane: disabling the core
@@ -91,17 +121,25 @@ export class BacklinkFullPathComponent extends LayoutReadyComponent {
      * covers alone - the core plugin was disabled when this component loaded, so there was no pane to reach.
      * Checked after the `await`, so a load-time call and an enable racing it cannot both install.
      */
-    if (!backlinkView || this.isBacklinksPanePatched) {
-      return;
+    if (!backlinkComponent || this.isBacklinksPanePatched) {
+      return false;
     }
 
     this.isBacklinksPanePatched = true;
     this.addChild(
       new ResultDomAddResultPatchComponent({
         pluginSettingsComponent: this.pluginSettingsComponent,
-        resultDom: backlinkView.backlink.backlinkDom
+        resultDom: backlinkComponent.backlinkDom
       })
     );
+    return true;
+  }
+
+  private async patchLateBacklinks(): Promise<void> {
+    // The backlinks that just appeared rendered their rows before the patch was in, so render them again.
+    if (await this.patchBacklinksPane()) {
+      await this.refreshBacklinkPanels();
+    }
   }
 
   private async refreshBacklinkPanels(): Promise<void> {
