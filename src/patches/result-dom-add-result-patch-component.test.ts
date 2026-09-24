@@ -38,7 +38,7 @@ describe('ResultDomAddResultPatchComponent', () => {
     resultDomPrototype = {
       addResult: vi.fn().mockImplementation(() => createOriginalItem(true))
     };
-    resultDom = castTo<ResultDom>(Object.create(resultDomPrototype));
+    resultDom = createResultDom(createDiv({ cls: 'backlink-pane' }));
   });
 
   it('should register a single method patch on load', () => {
@@ -55,9 +55,27 @@ describe('ResultDomAddResultPatchComponent', () => {
     const component = createComponent();
     component.load();
 
-    const item = resultDomPrototype.addResult(createMockFile('note.md'), strictProxy<ResultDomResult>({}), 'content', true);
+    const item = addResult(resultDom, 'note.md');
 
     expect(item.el.querySelector('.tree-item-inner')).toBeNull();
+  });
+
+  it('should leave a result list outside the backlinks pane untouched', () => {
+    const component = createComponent();
+    component.load();
+
+    const item = addResult(createResultDom(createDiv({ cls: 'search-result-container' })), 'folder/note.md');
+
+    expect(item.el.querySelector('.tree-item-inner')?.textContent).toBe('Original');
+  });
+
+  it('should leave a result list with no parent element untouched', () => {
+    const component = createComponent();
+    component.load();
+
+    const item = addResult(createResultDom(null), 'folder/note.md');
+
+    expect(item.el.querySelector('.tree-item-inner')?.textContent).toBe('Original');
   });
 
   it('should remove the patch on unload', () => {
@@ -65,7 +83,7 @@ describe('ResultDomAddResultPatchComponent', () => {
     component.load();
     component.unload();
 
-    const item = resultDomPrototype.addResult(createMockFile('note.md'), strictProxy<ResultDomResult>({}), 'content', true);
+    const item = addResult(resultDom, 'note.md');
 
     expect(item.el.querySelector('.tree-item-inner')?.textContent).toBe('Original');
   });
@@ -182,6 +200,15 @@ describe('ResultDomAddResultPatchComponent', () => {
     });
   });
 
+  function addResult(targetResultDom: ResultDom, filePath: string): ResultDomItem {
+    return resultDomPrototype.addResult.call(targetResultDom, createMockFile(filePath), strictProxy<ResultDomResult>({}), 'content', true);
+  }
+
+  function createResultDom(parentEl: HTMLElement | null): ResultDom {
+    const el = parentEl?.createDiv() ?? createDiv();
+    return castTo<ResultDom>(Object.assign(Object.create(resultDomPrototype), { el }));
+  }
+
   function createComponent(): ResultDomAddResultPatchComponent {
     return new ResultDomAddResultPatchComponent({
       pluginSettingsComponent,
@@ -193,7 +220,7 @@ describe('ResultDomAddResultPatchComponent', () => {
     const component = createComponent();
     component.load();
 
-    const item = resultDomPrototype.addResult(createMockFile(filePath), strictProxy<ResultDomResult>({}), 'content', true);
+    const item = addResult(resultDom, filePath);
     const inner = item.el.querySelector('.tree-item-inner');
     const container = inner?.firstElementChild;
     if (!(container instanceof HTMLDivElement)) {

@@ -9,6 +9,14 @@ import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/mo
 
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
+/*
+ * `ResultDom` is one class shared by every file result list: the backlinks component's linked and unlinked mentions,
+ * core Search, embedded `query` blocks and the outgoing-links pane's unlinked mentions. The patch sits on its prototype,
+ * so it has to pick the backlinks lists out itself. Obsidian's `BacklinkComponent` creates both of its lists as direct
+ * children of its own `.backlink-pane`, in the pane and in the document alike, and nothing else uses that class.
+ */
+const BACKLINK_PANE_CLASS = 'backlink-pane';
+
 interface ResultDomAddResultPatchComponentConstructorParams {
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly resultDom: ResultDom;
@@ -30,9 +38,13 @@ export class ResultDomAddResultPatchComponent extends MonkeyAroundComponent {
       methodName: 'addResult',
       patchHandler: ({
         fallback,
-        originalArguments: [file]
+        originalArguments: [file],
+        originalThis
       }) => {
         const resultDomItem = fallback();
+        if (!isBacklinkResultDom(originalThis)) {
+          return resultDomItem;
+        }
         const fileNameCaptionEl = resultDomItem.el.querySelector('.tree-item-inner');
         if (fileNameCaptionEl) {
           fileNameCaptionEl.empty();
@@ -107,4 +119,8 @@ export class ResultDomAddResultPatchComponent extends MonkeyAroundComponent {
 
     return container;
   }
+}
+
+function isBacklinkResultDom(resultDom: ResultDom): boolean {
+  return resultDom.el.parentElement?.classList.contains(BACKLINK_PANE_CLASS) ?? false;
 }
