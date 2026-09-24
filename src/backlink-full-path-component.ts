@@ -18,6 +18,7 @@ interface BacklinkFullPathComponentConstructorParams {
 }
 
 export class BacklinkFullPathComponent extends LayoutReadyComponent {
+  private isBacklinksPanePatched = false;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
 
   public constructor(params: BacklinkFullPathComponentConstructorParams) {
@@ -82,10 +83,19 @@ export class BacklinkFullPathComponent extends LayoutReadyComponent {
 
   private async patchBacklinksPane(): Promise<void> {
     const backlinkView = await this.getBacklinkView();
-    if (!backlinkView) {
+
+    /*
+     * Install the patch once. It sits on the `ResultDom` prototype, which outlives the pane: disabling the core
+     * Backlinks plugin leaves it in place and re-enabling it reuses the same class, so patching on every enable
+     * only stacks another wrapper around every result row. The enable path still matters for the one case it
+     * covers alone - the core plugin was disabled when this component loaded, so there was no pane to reach.
+     * Checked after the `await`, so a load-time call and an enable racing it cannot both install.
+     */
+    if (!backlinkView || this.isBacklinksPanePatched) {
       return;
     }
 
+    this.isBacklinksPanePatched = true;
     this.addChild(
       new ResultDomAddResultPatchComponent({
         pluginSettingsComponent: this.pluginSettingsComponent,

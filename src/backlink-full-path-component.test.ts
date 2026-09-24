@@ -225,6 +225,47 @@ describe('BacklinkFullPathComponent', () => {
 
       expect(addChildSpy).toHaveBeenCalledWith(expect.any(ResultDomAddResultPatchComponent));
     });
+
+    it('should add the result-dom patch child only once across repeated calls', async () => {
+      const backlinkDomPrototype = { addResult: vi.fn() };
+      const backlinkView = strictProxy<BacklinkView>({
+        backlink: strictProxy({
+          backlinkDom: Object.create(backlinkDomPrototype)
+        })
+      });
+      context.backlinkLeaves.push(castTo<WorkspaceLeaf>({
+        loadIfDeferred: vi.fn().mockResolvedValue(undefined),
+        view: backlinkView
+      }));
+      const addChildSpy = vi.spyOn(context.component, 'addChild');
+
+      await Promise.all([
+        internals(context.component).patchBacklinksPane(),
+        internals(context.component).patchBacklinksPane()
+      ]);
+      await internals(context.component).patchBacklinksPane();
+
+      expect(addChildSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should still patch on a later call when an earlier one found no backlink view', async () => {
+      const addChildSpy = vi.spyOn(context.component, 'addChild');
+      await internals(context.component).patchBacklinksPane();
+
+      const backlinkDomPrototype = { addResult: vi.fn() };
+      const backlinkView = strictProxy<BacklinkView>({
+        backlink: strictProxy({
+          backlinkDom: Object.create(backlinkDomPrototype)
+        })
+      });
+      context.backlinkLeaves.push(castTo<WorkspaceLeaf>({
+        loadIfDeferred: vi.fn().mockResolvedValue(undefined),
+        view: backlinkView
+      }));
+      await internals(context.component).patchBacklinksPane();
+
+      expect(addChildSpy).toHaveBeenCalledOnce();
+    });
   });
 
   describe('reloadBacklinksView', () => {
