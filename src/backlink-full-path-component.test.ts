@@ -27,6 +27,7 @@ import { PluginSettings } from './plugin-settings.ts';
 
 interface ComponentInternals {
   getBacklinkView: () => Promise<BacklinkView | null>;
+  onBacklinksCorePluginEnable: () => void;
   patchBacklinksPane: () => Promise<void>;
   refreshBacklinkPanels: () => Promise<void>;
   reloadBacklinksView: () => Promise<void>;
@@ -34,7 +35,6 @@ interface ComponentInternals {
 
 interface CorePlugin {
   enabled: boolean;
-  instance: object;
 }
 
 interface PushBacklinkViewParams {
@@ -47,8 +47,10 @@ interface TestContext {
   backlinkLeaves: WorkspaceLeaf[];
   component: BacklinkFullPathComponent;
   getPluginById: ReturnType<typeof vi.fn>;
+  internalPluginsOn: ReturnType<typeof vi.fn>;
   markdownLeaves: WorkspaceLeaf[];
   on: ReturnType<typeof vi.fn>;
+  triggerChange: () => void;
 }
 
 describe('BacklinkFullPathComponent', () => {
@@ -84,14 +86,52 @@ describe('BacklinkFullPathComponent', () => {
       expect(patchSpy).not.toHaveBeenCalled();
     });
 
-    it('should add the onUserEnable patch child when the core plugin is found', async () => {
+    it('should subscribe to internal plugin changes when the core plugin is found', async () => {
       context.getPluginById.mockReturnValue(createCorePlugin(false));
       vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
-      const addChildSpy = vi.spyOn(context.component, 'addChild');
 
       await triggerLayoutReady();
 
-      expect(addChildSpy).toHaveBeenCalled();
+      expect(context.internalPluginsOn).toHaveBeenCalledWith('change', expect.any(Function));
+    });
+
+    it('should patch the pane when the core plugin becomes enabled', async () => {
+      const corePlugin = createCorePlugin(false);
+      context.getPluginById.mockReturnValue(corePlugin);
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+
+      await triggerLayoutReady();
+      corePlugin.enabled = true;
+      context.triggerChange();
+
+      expect(patchSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should patch the pane once per enable, not on every change', async () => {
+      const corePlugin = createCorePlugin(false);
+      context.getPluginById.mockReturnValue(corePlugin);
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+
+      await triggerLayoutReady();
+      corePlugin.enabled = true;
+      context.triggerChange();
+      context.triggerChange();
+
+      expect(patchSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not patch the pane when the core plugin becomes disabled', async () => {
+      const corePlugin = createCorePlugin(true);
+      context.getPluginById.mockReturnValue(corePlugin);
+      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
+      vi.spyOn(internals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
+
+      await triggerLayoutReady();
+      patchSpy.mockClear();
+      corePlugin.enabled = false;
+      context.triggerChange();
+
+      expect(patchSpy).not.toHaveBeenCalled();
     });
 
     it('should patch the pane and refresh panels when the plugin is enabled', async () => {
@@ -132,7 +172,7 @@ describe('BacklinkFullPathComponent', () => {
     it('should patch the backlinks pane', () => {
       const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(undefined);
 
-      context.component.onBacklinksCorePluginEnable();
+      internals(context.component).onBacklinksCorePluginEnable();
 
       expect(patchSpy).toHaveBeenCalled();
     });
@@ -260,10 +300,7 @@ describe('BacklinkFullPathComponent', () => {
 });
 
 function createCorePlugin(isEnabled: boolean): CorePlugin {
-  return {
-    enabled: isEnabled,
-    instance: Object.create({ onUserEnable: vi.fn() })
-  };
+  return { enabled: isEnabled };
 }
 
 function createMarkdownLeaf(backlinks: unknown): WorkspaceLeaf {
@@ -280,11 +317,13 @@ function createTestContext(): TestContext {
   const backlinkLeaves: WorkspaceLeaf[] = [];
   const markdownLeaves: WorkspaceLeaf[] = [];
   const getPluginById = vi.fn();
+  const internalPluginsOn = vi.fn().mockReturnValue({});
   const on = vi.fn();
 
   const app = strictProxy<App>({
     internalPlugins: {
-      getPluginById
+      getPluginById,
+      on: internalPluginsOn
     },
     workspace: {
       getLeavesOfType: vi.fn().mockImplementation((type: string) => {
@@ -317,8 +356,12 @@ function createTestContext(): TestContext {
     backlinkLeaves,
     component,
     getPluginById,
+    internalPluginsOn,
     markdownLeaves,
-    on
+    on,
+    triggerChange: (): void => {
+      castTo<() => void>(internalPluginsOn.mock.calls[0]?.[1])();
+    }
   };
 }
 
