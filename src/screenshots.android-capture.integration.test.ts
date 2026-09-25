@@ -48,6 +48,7 @@ import {
   captureObsidianScreenshot,
   evalInObsidian,
   labelScreenshot,
+  pollInObsidian,
   readPngDimensions
 } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
@@ -124,6 +125,12 @@ const WIDTH_IN_PIXELS = 900;
 const HEIGHT_IN_PIXELS = 1600;
 
 /**
+ * How long the fixtures get to appear in the vault after the push. Waited on from Node, so it is not
+ * bounded by the transport's per-closure cap.
+ */
+const SYNC_TIMEOUT_IN_MILLISECONDS = 60_000;
+
+/**
  * The note every `Meeting` links to — the one whose Backlinks pane is the
  * demonstration.
  */
@@ -191,34 +198,38 @@ beforeAll(async () => {
   vault.populate({ ...fixtures, ...buildStagedMeetingNotes() });
   await vault.syncToDevice();
 
+  /*
+   * Waited on from NODE, one short eval at a time, so it gets a whole minute instead of a slice of the
+   * setup closure's ~30s cap. `syncToDevice` has already extracted and flushed the files on the device by
+   * the time it returns; what is left is Obsidian NOTICING them, and that is usually under a second but
+   * took more than 11s in one run of six on a freshly booted emulator. Inside the closure it had 11s,
+   * because it shared the cap with the render wait, so that one slow scan failed the whole suite.
+   */
+  await pollInObsidian({
+    input: { subjectNotePath: SUBJECT_NOTE_PATH },
+    poll({ app, subjectNotePath }): boolean {
+      return Boolean(app.vault.getFileByPath(subjectNotePath));
+    },
+    timeoutInMilliseconds: SYNC_TIMEOUT_IN_MILLISECONDS,
+    timeoutMessage: 'the subject note never appeared in the vault',
+    until: (hasArrived: boolean): boolean => hasArrived,
+    vaultPath: vaultPath()
+  });
+
   setupDiagnostics = await evalInObsidian({
     async callback({ app, backlinkCount, fontSizeInPixels, lib: { waitUntil }, subjectNotePath }) {
-      /*
-       * Under the transport's ~30s per-closure cap, not at it.
-       * This wait, the render wait below and a settle share one budget, so at 20_000 apiece it declared 41.5s.
-       * The eval is killed at the cap first and reported as a bare transport timeout.
-       * That names the harness rather than the wait that overran.
-       * What is waited on here lands in well under a second, so the smaller ceiling costs nothing.
-       */
-      const SETTLE_TIMEOUT_IN_MILLISECONDS = 11_000;
       const SETTLE_DELAY_IN_MILLISECONDS = 1500;
       // A closure runs inside ONE Appium `execute/sync` call, which WebDriver
       // caps around 30s — well below the harness's own timeouts. A longer wait
       // in here dies as an opaque `script timeout` rather than as a readable
-      // assertion failure, so keep every in-closure wait comfortably under it.
-      // Sized with the settle wait above, whose comment explains the shared budget.
-      const RENDER_TIMEOUT_IN_MILLISECONDS = 11_000;
+      // assertion failure, so keep every in-closure wait comfortably under it,
+      // leaving room for the settle below.
+      const RENDER_TIMEOUT_IN_MILLISECONDS = 20_000;
 
       app.changeTheme('obsidian');
 
       const backlinkPlugin = app.internalPlugins.getPluginById('backlink');
       await backlinkPlugin?.enable();
-
-      await waitUntil({
-        message: 'the subject note to appear in the vault',
-        predicate: () => Boolean(app.vault.getFileByPath(subjectNotePath)),
-        timeoutInMilliseconds: SETTLE_TIMEOUT_IN_MILLISECONDS
-      });
 
       const file = app.vault.getFileByPath(subjectNotePath);
       if (!file) {
