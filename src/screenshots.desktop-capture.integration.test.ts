@@ -84,6 +84,7 @@ import {
 interface BacklinkPaneComponent {
   setCollapseAll: (this: void, isCollapsed: boolean) => void;
   setExtraContext: (this: void, hasExtraContext: boolean) => void;
+  setSortOrder: (this: void, sortOrder: string) => void;
 }
 
 /**
@@ -242,6 +243,43 @@ beforeAll(async () => {
       await sleep(SETTLE_DELAY_IN_MILLISECONDS);
     },
     input: { subjectNotePath: SUBJECT_NOTE_PATH },
+    vaultPath: vaultPath()
+  });
+
+  // Every row is a `Meeting.md`, and the pane's default sort compares basenames only, so it ties on all of
+  // them. A tie keeps insertion order, and the backlink search inserts in the order its async file reads
+  // complete, which differs from run to run. Give each fixture a distinct, fixed mtime in path order and
+  // sort old-to-new, so the rows read in path order every run.
+  await evalInObsidian({
+    async callback({ app, lib: { waitUntil }, subjectRootPath }) {
+      const SETTLE_TIMEOUT_IN_MILLISECONDS = 12_000;
+      const SETTLE_DELAY_IN_MILLISECONDS = 1000;
+      // 2024-01-01T00:00:00Z, one minute apart: fixed values, so nothing about the run leaks into the order.
+      const BASE_MTIME = 1_704_067_200_000;
+      const MTIME_STEP_IN_MILLISECONDS = 60_000;
+
+      const fixtureFiles = app.vault.getMarkdownFiles()
+        .filter((fixtureFile) => fixtureFile.path.startsWith(`${subjectRootPath}/`))
+        .sort((a, b) => a.path.localeCompare(b.path));
+      const expectedMtimes = new Map<string, number>();
+      for (const [index, fixtureFile] of fixtureFiles.entries()) {
+        const mtime = BASE_MTIME + index * MTIME_STEP_IN_MILLISECONDS;
+        expectedMtimes.set(fixtureFile.path, mtime);
+        await app.vault.modify(fixtureFile, await app.vault.read(fixtureFile), { mtime });
+      }
+
+      await waitUntil({
+        message: 'every fixture note to carry its stamped mtime',
+        predicate: () => fixtureFiles.every((fixtureFile) => fixtureFile.stat.mtime === expectedMtimes.get(fixtureFile.path)),
+        timeoutInMilliseconds: SETTLE_TIMEOUT_IN_MILLISECONDS
+      });
+
+      const backlinkView: unknown = app.workspace.getLeavesOfType('backlink')[0]?.view;
+      (backlinkView as BacklinkPaneView).backlink.setSortOrder('byModifiedTimeReverse');
+
+      await sleep(SETTLE_DELAY_IN_MILLISECONDS);
+    },
+    input: { subjectRootPath: SUBJECT_ROOT_PATH },
     vaultPath: vaultPath()
   });
 });
