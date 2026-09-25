@@ -82,6 +82,7 @@ import {
  * The slice of Obsidian's backlink pane this storyboard drives.
  */
 interface BacklinkPaneComponent {
+  backlinkDom: BacklinkResultDom;
   setCollapseAll: (this: void, isCollapsed: boolean) => void;
   setExtraContext: (this: void, hasExtraContext: boolean) => void;
   setSortOrder: (this: void, sortOrder: string) => void;
@@ -92,6 +93,21 @@ interface BacklinkPaneComponent {
  */
 interface BacklinkPaneView {
   backlink: BacklinkPaneComponent;
+}
+
+/**
+ * The pane's linked-mentions result list, reduced to the lookup of files it
+ * currently lists.
+ */
+interface BacklinkResultDom {
+  resultDomLookup: Map<BacklinkResultFile, unknown>;
+}
+
+/**
+ * A file keyed in the pane's result lookup, reduced to its path.
+ */
+interface BacklinkResultFile {
+  path: string;
 }
 
 /**
@@ -157,6 +173,12 @@ const STAGED_MEETING_FOLDERS = [
   'Team/Weekly'
 ];
 
+/**
+ * The linked mentions the Backlinks pane lists: three from the demo vault plus
+ * the staged ones above.
+ */
+const BACKLINK_COUNT = 3 + STAGED_MEETING_FOLDERS.length;
+
 const IMAGES_DIRECTORY = join(process.cwd(), 'images', 'screenshots');
 const DEMO_VAULT_PATH = join(process.cwd(), 'demo-vault');
 
@@ -177,7 +199,7 @@ beforeAll(async () => {
   await vault.syncToDevice();
 
   await evalInObsidian({
-    async callback({ app, lib: { waitUntil }, subjectNotePath }) {
+    async callback({ app, backlinkCount, lib: { waitUntil }, subjectNotePath }) {
       /*
        * Under the transport's ~30s per-closure cap, not at it. At 30_000 this ceiling was unreachable: the
        * whole eval is killed at the cap first, and reported as a bare transport timeout naming the harness
@@ -186,8 +208,6 @@ beforeAll(async () => {
        */
       const SETTLE_TIMEOUT_IN_MILLISECONDS = 12_000;
       const SETTLE_DELAY_IN_MILLISECONDS = 1000;
-      // Three from the demo vault plus the four staged above.
-      const BACKLINK_COUNT = 7;
       const BACKLINKS_PANE_WIDTH_IN_PIXELS = 560;
 
       // The author's plugins are all shot in the default DARK theme so the sets read as one
@@ -215,7 +235,7 @@ beforeAll(async () => {
 
       await waitUntil({
         message: 'the Backlinks pane to list every Meeting note',
-        predicate: () => document.querySelectorAll('.backlink-pane .tree-item-inner').length >= BACKLINK_COUNT,
+        predicate: () => document.querySelectorAll('.backlink-pane .tree-item-inner').length >= backlinkCount,
         timeoutInMilliseconds: SETTLE_TIMEOUT_IN_MILLISECONDS
       });
 
@@ -242,7 +262,7 @@ beforeAll(async () => {
 
       await sleep(SETTLE_DELAY_IN_MILLISECONDS);
     },
-    input: { subjectNotePath: SUBJECT_NOTE_PATH },
+    input: { backlinkCount: BACKLINK_COUNT, subjectNotePath: SUBJECT_NOTE_PATH },
     vaultPath: vaultPath()
   });
 
@@ -251,7 +271,7 @@ beforeAll(async () => {
   // complete, which differs from run to run. Give each fixture a distinct, fixed mtime in path order and
   // sort old-to-new, so the rows read in path order every run.
   await evalInObsidian({
-    async callback({ app, lib: { waitUntil }, subjectRootPath }) {
+    async callback({ app, backlinkCount, lib: { waitUntil }, subjectNotePath, subjectRootPath }) {
       const SETTLE_TIMEOUT_IN_MILLISECONDS = 12_000;
       const SETTLE_DELAY_IN_MILLISECONDS = 1000;
       // 2024-01-01T00:00:00Z, one minute apart: fixed values, so nothing about the run leaks into the order.
@@ -275,11 +295,28 @@ beforeAll(async () => {
       });
 
       const backlinkView: unknown = app.workspace.getLeavesOfType('backlink')[0]?.view;
-      (backlinkView as BacklinkPaneView).backlink.setSortOrder('byModifiedTimeReverse');
+      const backlinks = (backlinkView as BacklinkPaneView).backlink;
+      backlinks.setSortOrder('byModifiedTimeReverse');
+
+      // Each `modify` re-indexes its note and the pane re-runs its search, dropping and re-adding rows as the
+      // reads land. A fixed settle is not enough: the mobile suite shot one run of three with a row missing
+      // in every frame. So wait until every linking note is back, both in the resolved links and in the
+      // pane's linked-mentions lookup, before settling.
+      await waitUntil({
+        message: 'the Backlinks pane to list every Meeting note again after the mtime stamp',
+        predicate: () => {
+          const linkingPaths = fixtureFiles
+            .filter((fixtureFile) => app.metadataCache.resolvedLinks[fixtureFile.path]?.[subjectNotePath] !== undefined)
+            .map((fixtureFile) => fixtureFile.path);
+          const listedPaths = new Set([...backlinks.backlinkDom.resultDomLookup.keys()].map((file) => file.path));
+          return linkingPaths.length === backlinkCount && linkingPaths.every((path) => listedPaths.has(path));
+        },
+        timeoutInMilliseconds: SETTLE_TIMEOUT_IN_MILLISECONDS
+      });
 
       await sleep(SETTLE_DELAY_IN_MILLISECONDS);
     },
-    input: { subjectRootPath: SUBJECT_ROOT_PATH },
+    input: { backlinkCount: BACKLINK_COUNT, subjectNotePath: SUBJECT_NOTE_PATH, subjectRootPath: SUBJECT_ROOT_PATH },
     vaultPath: vaultPath()
   });
 });
