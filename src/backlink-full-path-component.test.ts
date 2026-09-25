@@ -469,10 +469,7 @@ function createTestContext(): TestContext {
         if (type === ViewType.Backlink) {
           return backlinkLeaves;
         }
-        if (type === ViewType.Markdown) {
-          return markdownLeaves;
-        }
-        return [];
+        return type === ViewType.Markdown ? markdownLeaves : [];
       }),
       on: workspaceOn,
       onLayoutReady: vi.fn().mockImplementation((callback: () => void) => {
