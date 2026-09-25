@@ -146,11 +146,7 @@ export class BacklinkFullPathComponent extends LayoutReadyComponent {
     await this.reloadBacklinksView();
 
     for (const leaf of this.app.workspace.getLeavesOfType(ViewType.Markdown)) {
-      if (!(leaf.view instanceof MarkdownView)) {
-        continue;
-      }
-
-      if (!leaf.view.backlinks) {
+      if (!(leaf.view instanceof MarkdownView) || !leaf.view.backlinks) {
         continue;
       }
 
