@@ -8,6 +8,7 @@ import {
 } from '@obsidian-typings/obsidian-public-latest/implementations';
 import { MarkdownView } from 'obsidian';
 import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
+import { CorePluginToggleComponent } from 'obsidian-dev-utils/obsidian/components/core-plugin-toggle-component';
 import { LayoutReadyComponent } from 'obsidian-dev-utils/obsidian/components/layout-ready-component';
 
 import { ResultDomAddResultPatchComponent } from './patches/result-dom-add-result-patch-component.ts';
@@ -39,24 +40,6 @@ export class BacklinkFullPathComponent extends LayoutReadyComponent {
     }
 
     /*
-     * Obsidian publishes this itself: `InternalPlugin.enable()` sets `enabled` as its first statement and
-     * raises `change` on the manager as its last, and `disable()` mirrors that, so the flag read inside the
-     * handler is always the post-transition one. Obsidian's own Core plugins settings tab listens to the
-     * same signal. Diffing it replaces a monkey patch of `onUserEnable` on the `BacklinkPluginInstance`
-     * prototype, which every vault shares.
-     */
-    let wasBacklinksCorePluginEnabled = backlinksCorePlugin.enabled;
-    this.registerEvent(this.app.internalPlugins.on('change', () => {
-      const isBacklinksCorePluginEnabled = backlinksCorePlugin.enabled;
-      const hasBacklinksCorePluginJustBeenEnabled = isBacklinksCorePluginEnabled && !wasBacklinksCorePluginEnabled;
-      wasBacklinksCorePluginEnabled = isBacklinksCorePluginEnabled;
-
-      if (hasBacklinksCorePluginJustBeenEnabled) {
-        this.onBacklinksCorePluginEnable();
-      }
-    }));
-
-    /*
      * The load and the enable are not the only moments a backlinks component can first appear: with the core plugin
      * enabled but its pane closed, there is nothing to patch at load, and opening the pane later raises no `change`.
      * Measured in a real Obsidian 1.14.2, that left the plugin inert until a restart with the pane open. Opening a
@@ -73,6 +56,23 @@ export class BacklinkFullPathComponent extends LayoutReadyComponent {
       await this.patchBacklinksPane();
       await this.refreshBacklinkPanels();
     }
+
+    /*
+     * Patches on each later enable, which Obsidian publishes through the `change` signal of `app.internalPlugins`.
+     * The enable path matters for the one case it covers alone: the core plugin was disabled at load, so there was
+     * no pane to reach. Added after the awaited load-time patch on purpose: the component re-reads `enabled` at its
+     * own load, so a toggle during that await is still caught, and its load-time enable is a no-op under the
+     * once-guard in `patchBacklinksPane`.
+     */
+    this.addChild(
+      new CorePluginToggleComponent({
+        app: this.app,
+        corePluginId: InternalPluginName.Backlink,
+        onEnable: async (): Promise<void> => {
+          await this.patchBacklinksPane();
+        }
+      })
+    );
 
     this.register(() => {
       invokeAsyncSafely(async () => {
@@ -105,10 +105,6 @@ export class BacklinkFullPathComponent extends LayoutReadyComponent {
 
     await backlinksLeaf.loadIfDeferred();
     return backlinksLeaf.view as BacklinkView;
-  }
-
-  private onBacklinksCorePluginEnable(): void {
-    invokeAsyncSafely(() => this.patchBacklinksPane());
   }
 
   private async patchBacklinksPane(): Promise<boolean> {

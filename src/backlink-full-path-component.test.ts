@@ -29,7 +29,6 @@ import { PluginSettings } from './plugin-settings.ts';
 interface ComponentInternals {
   getBacklinkComponent: () => Promise<BacklinkComponent | null>;
   getBacklinkView: () => Promise<BacklinkView | null>;
-  onBacklinksCorePluginEnable: () => void;
   patchBacklinksPane: () => Promise<boolean>;
   patchLateBacklinks: () => Promise<void>;
   refreshBacklinkPanels: () => Promise<void>;
@@ -250,16 +249,6 @@ describe('BacklinkFullPathComponent', () => {
       context.markdownLeaves.push(createMarkdownLeaf(null));
 
       await expect(internals(context.component).getBacklinkComponent()).resolves.toBeNull();
-    });
-  });
-
-  describe('onBacklinksCorePluginEnable', () => {
-    it('should patch the backlinks pane', () => {
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
-
-      internals(context.component).onBacklinksCorePluginEnable();
-
-      expect(patchSpy).toHaveBeenCalled();
     });
   });
 
