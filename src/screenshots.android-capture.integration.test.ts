@@ -284,7 +284,7 @@ beforeAll(async () => {
   });
 
   // The same tie the desktop suite breaks, broken the same way so both sets show the same row order. Every
-  // row is a `Meeting.md`, and the pane's default sort compares basenames only, so a tie keeps the order the
+  // row is a `Meeting.md`, and the pane's default sort compares base names only, so a tie keeps the order the
   // backlink search's async file reads completed in, which differs from run to run. Give each fixture a
   // distinct, fixed mtime in path order and sort old-to-new. A closure of its own, so it gets its own share
   // of the transport's ~30s per-closure cap rather than eating into the setup closure's.
@@ -299,16 +299,16 @@ beforeAll(async () => {
       const fixtureFiles = app.vault.getMarkdownFiles()
         .filter((fixtureFile) => fixtureFile.path.startsWith(`${subjectRootPath}/`))
         .sort((a, b) => a.path.localeCompare(b.path));
-      const expectedMtimes = new Map<string, number>();
+      const expectedModifiedTimes = new Map<string, number>();
       for (const [index, fixtureFile] of fixtureFiles.entries()) {
         const mtime = BASE_MTIME + index * MTIME_STEP_IN_MILLISECONDS;
-        expectedMtimes.set(fixtureFile.path, mtime);
+        expectedModifiedTimes.set(fixtureFile.path, mtime);
         await app.vault.modify(fixtureFile, await app.vault.read(fixtureFile), { mtime });
       }
 
       await waitUntil({
         message: 'every fixture note to carry its stamped mtime',
-        predicate: () => fixtureFiles.every((fixtureFile) => fixtureFile.stat.mtime === expectedMtimes.get(fixtureFile.path)),
+        predicate: () => fixtureFiles.every((fixtureFile) => fixtureFile.stat.mtime === expectedModifiedTimes.get(fixtureFile.path)),
         timeoutInMilliseconds: SETTLE_TIMEOUT_IN_MILLISECONDS
       });
 
