@@ -64,6 +64,7 @@ import {
 import { join } from 'node:path';
 import process from 'node:process';
 import {
+  applyObsidianTheme,
   buildDemoVaultPopulate,
   captureObsidianScreenshot,
   evalInObsidian,
@@ -198,6 +199,12 @@ beforeAll(async () => {
   vault.populate({ ...fixtures, ...buildStagedMeetingNotes() });
   await vault.syncToDevice();
 
+  // The author's plugins are all shot in the default DARK theme so the sets read as one series. Not a bare
+  // `app.changeTheme`: that only schedules the config save, and a config reload landing first drops the theme
+  // and shoots every frame light. `applyObsidianTheme` saves at once, and `captureObsidianScreenshot` then
+  // refuses any frame that has left the theme.
+  await applyObsidianTheme({ theme: 'dark', vaultPath: vaultPath() });
+
   await evalInObsidian({
     async callback({ app, backlinkCount, lib: { waitUntil }, subjectNotePath }) {
       /*
@@ -209,12 +216,6 @@ beforeAll(async () => {
       const SETTLE_TIMEOUT_IN_MILLISECONDS = 12_000;
       const SETTLE_DELAY_IN_MILLISECONDS = 1000;
       const BACKLINKS_PANE_WIDTH_IN_PIXELS = 560;
-
-      // The author's plugins are all shot in the default DARK theme so the sets read as one
-      // series (`moonstone` is the light one). Spelled inline rather than passed
-      // via `input`, because `changeTheme` takes a literal union that a
-      // serialized string would widen away.
-      app.changeTheme('obsidian');
 
       const backlinkPlugin = app.internalPlugins.getPluginById('backlink');
       await backlinkPlugin?.enable();
