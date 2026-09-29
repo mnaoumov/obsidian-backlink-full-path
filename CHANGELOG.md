@@ -1,5 +1,42 @@
 # CHANGELOG
 
+## 1.7.6
+
+- test(screenshots): merge setting the desktop capture theme with applyObsidianTheme
+- test(screenshots): merge the cspell-clean wording in the capture suites
+- refactor: merge watching Backlinks re-enables through CorePluginToggleComponent
+- test(screenshots): merge the Node-side wait for the mobile subject note
+- test(screenshots): merge the desktop post-stamp Backlinks wait
+- test(screenshots): merge the deterministic mobile Backlinks order
+- test(screenshots): merge the deterministic desktop Backlinks order
+- chore(deps): merge floating obsidian-integration-testing to ^17.0.1 and obsidian-dev-utils to ^107.0.0
+- chore(deps): merge floating obsidian-test-mocks to ^7.0.0
+- fix(backlinks): merge keeping the full-path caption out of Search and query blocks
+- fix(backlinks): merge patching the pane when it opens after load
+- fix(backlinks): merge installing the pane patch once per session
+- fix(test): merge the headless demo-vault toolkit install
+- fix(deps): restore the lockfile's missing resolved and integrity fields
+- refactor(backlinks): drop the shared-prototype onUserEnable patch
+- test(screenshots): name the popout as the settings-modal cause
+- fix(deps): float devalue to 5.9.4, clearing GHSA-9rgm-9g3h-6x36
+- build(markdownlint): forbid hard-wrapped markdown paragraphs
+- chore(deps): drop the dead type-fest override
+- chore(deps): drop the dead markdown-it override
+- chore(deps): drop the dead js-yaml override
+- style(comments): stop capitalizing the middle of a wrapped comment
+- docs: replace the private rule-id citations with what they assert
+- docs: name the library and the sibling plugins so a reader can resolve them
+- docs: replace the private tracker references with what they pointed at
+- chore(deps): move to obsidian-dev-utils 103
+- test: bring the capture suite's wait ceilings under the transport's per-eval cap
+- chore: adopt the npm run gate branch gate
+- docs: say where the debug command is run
+- test: bring the in-closure wait ceiling under the transport's per-eval cap
+- docs: name the unversioned demo-vault asset and the folder it unzips into
+- chore: make the LICENSE copyright line checkable by the linter and guard it against the year roll-over
+- test(test-mocks): drop the hand-rolled app.plugins seed, and sweep the dependencies
+- fix(build): wire build:compile to buildCompile and drop the duplicate leaf script
+
 ## 1.7.5
 
 - chore(deps): sweep caret-ranged dependencies to latest
