@@ -57,6 +57,8 @@
  * modal needs none of it.
  */
 
+import type { WorkspaceSidedock } from 'obsidian';
+
 import {
   mkdirSync,
   writeFileSync
@@ -109,22 +111,6 @@ interface BacklinkResultDom {
  */
 interface BacklinkResultFile {
   path: string;
-}
-
-/**
- * `App`, reduced to the inline-title toggle that `obsidian-typings` does not
- * declare.
- */
-interface InlineTitleApp {
-  updateInlineTitleDisplay: (this: void) => void;
-}
-
-/**
- * The desktop side dock, reduced to the resize call. `rightSplit` is typed as
- * the desktop side dock OR the mobile drawer, and only the side dock resizes.
- */
-interface ResizableSideDock {
-  setSize: (this: void, size: number) => void;
 }
 
 /**
@@ -244,14 +230,12 @@ beforeAll(async () => {
       // otherwise take most of a 1200x800 frame while the paths — the thing being
       // sold — sit in a narrow strip on the right.
       app.workspace.leftSplit.collapse();
-      const rightSplit: unknown = app.workspace.rightSplit;
-      (rightSplit as ResizableSideDock).setSize(BACKLINKS_PANE_WIDTH_IN_PIXELS);
+      (app.workspace.rightSplit as WorkspaceSidedock).setSize(BACKLINKS_PANE_WIDTH_IN_PIXELS);
 
       // The note's own `# Shared topic` heading already titles it, so Obsidian's
       // inline title renders the name twice.
       app.vault.setConfig('showInlineTitle', false);
-      const inlineTitleApp: unknown = app;
-      (inlineTitleApp as InlineTitleApp).updateInlineTitleDisplay();
+      app.updateInlineTitleDisplay();
 
       // Context excerpts turn every entry into a block of highlighted raw
       // Markdown, burying the path in the entry's title.

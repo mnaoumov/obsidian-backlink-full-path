@@ -92,21 +92,6 @@ interface BacklinkResultFile {
 }
 
 /**
- * `App`, reduced to the font-size applier that `obsidian-typings` does not
- * declare. Setting `baseFontSize` alone changes nothing on screen.
- */
-interface FontSizeApp {
-  updateFontSize: (this: void) => void;
-}
-
-/**
- * `App`, reduced to the inline-title applier, likewise undeclared.
- */
-interface InlineTitleApp {
-  updateInlineTitleDisplay: (this: void) => void;
-}
-
-/**
  * The settings component's editor entry point.
  */
 interface SettingsEditableComponent {
@@ -253,14 +238,13 @@ beforeAll(async () => {
       // THUMBNAIL. Not much bigger: the paths are long, and past ~18px the
       // entry titles start wrapping mid-word, which reads as a rendering bug.
       app.vault.setConfig('baseFontSize', fontSizeInPixels);
-      const fontApp: unknown = app;
-      (fontApp as FontSizeApp).updateFontSize();
+      app.updateFontSize();
 
       // The note's own `# Shared topic` heading already titles it, so Obsidian's
       // inline title renders the name twice. `updateOptions` does NOT pick this
       // up — the setting is applied by toggling a class on `document.body`.
       app.vault.setConfig('showInlineTitle', false);
-      (fontApp as InlineTitleApp).updateInlineTitleDisplay();
+      app.updateInlineTitleDisplay();
 
       // Context excerpts OFF, exactly as on desktop. Turning them on to fill a
       // phone frame was tried and is much worse: the excerpts are the notes'
