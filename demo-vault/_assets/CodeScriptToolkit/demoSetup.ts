@@ -43,7 +43,7 @@ export async function showBacklinks(app: App): Promise<void> {
  * Applies a settings patch, live, through the plugin's own settings component. The Backlinks pane
  * re-renders as soon as it lands.
  *
- * Manual equivalent: change the same option in **Settings -> Community plugins -> Backlink Full Path**.
+ * Manual equivalent: change the same option in **Settings -> Community plugins -> `Backlink Full Path`**.
  */
 export async function changeSettings(app: App, patch: DemoSettingsPatch): Promise<void> {
   await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: patch });
@@ -71,7 +71,7 @@ export async function restoreDefaults(app: App): Promise<void> {
  * Turns the plugin off, so the Backlinks pane falls back to Obsidian's three identical `Meeting`
  * entries — the before half of the two screenshots.
  *
- * Manual equivalent: toggle **Backlink Full Path** off in **Settings -> Community plugins**.
+ * Manual equivalent: toggle `Backlink Full Path` off in **Settings -> Community plugins**.
  */
 export async function disablePlugin(app: App): Promise<void> {
   await disableCommunityPlugin({ app, pluginId: PLUGIN_ID });
@@ -81,7 +81,7 @@ export async function disablePlugin(app: App): Promise<void> {
 /**
  * Turns the plugin back on.
  *
- * Manual equivalent: toggle **Backlink Full Path** back on in **Settings -> Community plugins**.
+ * Manual equivalent: toggle `Backlink Full Path` back on in **Settings -> Community plugins**.
  */
 export async function enablePlugin(app: App): Promise<void> {
   await enableCommunityPlugin({ app, pluginId: PLUGIN_ID });
