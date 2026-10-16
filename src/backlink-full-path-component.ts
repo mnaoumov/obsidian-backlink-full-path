@@ -2,14 +2,14 @@ import type { BacklinkView } from '@obsidian-typings/obsidian-public-latest';
 import type { BacklinkComponent } from '@obsidian-typings/obsidian-public-latest/implementations';
 import type { App } from 'obsidian';
 
+import { CorePluginToggleComponent } from '@mnaoumov/obsidian-lib/components/core-plugin-toggle-component';
+import { LayoutReadyComponent } from '@mnaoumov/obsidian-lib/components/layout-ready-component';
+import { invokeAsyncSafely } from '@mnaoumov/typescript-lib/async';
 import {
   InternalPluginName,
   ViewType
 } from '@obsidian-typings/obsidian-public-latest/implementations';
 import { MarkdownView } from 'obsidian';
-import { invokeAsyncSafely } from 'obsidian-dev-utils/async';
-import { CorePluginToggleComponent } from 'obsidian-dev-utils/obsidian/components/core-plugin-toggle-component';
-import { LayoutReadyComponent } from 'obsidian-dev-utils/obsidian/components/layout-ready-component';
 
 import { ResultDomAddResultPatchComponent } from './patches/result-dom-add-result-patch-component.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';

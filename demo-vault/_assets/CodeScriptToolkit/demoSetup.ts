@@ -1,11 +1,9 @@
 import type { App } from 'obsidian';
 
 import { Notice } from 'obsidian';
-import {
-  configureCommunityPlugin,
-  disableCommunityPlugin,
-  enableCommunityPlugin
-} from 'obsidian-dev-utils/obsidian/community-plugins';
+
+// No library import on purpose: CodeScript Toolkit resolves only obsidian and its own bundled modules inside
+// the vault, so these helpers talk to Obsidian's plugin manager directly.
 
 const PLUGIN_ID = 'backlink-full-path';
 const SHARED_TOPIC_PATH = 'Materials/01 Backlink full path/Shared topic.md';
@@ -18,6 +16,12 @@ interface DemoSettingsPatch {
   shouldIncludeExtension?: boolean;
   shouldReversePathParts?: boolean;
   shouldShowEllipsisForSkippedPathParts?: boolean;
+}
+
+interface PluginWithSettingsComponent {
+  pluginSettingsComponent: {
+    editAndSave(editor: (settings: DemoSettingsPatch) => void): Promise<void>;
+  };
 }
 
 /**
@@ -46,7 +50,15 @@ export async function showBacklinks(app: App): Promise<void> {
  * Manual equivalent: change the same option in **Settings -> Community plugins -> `Backlink Full Path`**.
  */
 export async function changeSettings(app: App, patch: DemoSettingsPatch): Promise<void> {
-  await configureCommunityPlugin({ app, pluginId: PLUGIN_ID, settings: patch });
+  const plugin = app.plugins.plugins[PLUGIN_ID] as unknown as PluginWithSettingsComponent | undefined;
+  if (!plugin) {
+    new Notice('Turn the plugin on first.');
+    return;
+  }
+
+  await plugin.pluginSettingsComponent.editAndSave((settings) => {
+    Object.assign(settings, patch);
+  });
   new Notice('Applied. Look at the Backlinks pane.');
 }
 
@@ -74,7 +86,7 @@ export async function restoreDefaults(app: App): Promise<void> {
  * Manual equivalent: toggle `Backlink Full Path` off in **Settings -> Community plugins**.
  */
 export async function disablePlugin(app: App): Promise<void> {
-  await disableCommunityPlugin({ app, pluginId: PLUGIN_ID });
+  await app.plugins.disablePluginAndSave(PLUGIN_ID);
   new Notice('Plugin off — the three backlinks are now indistinguishable.');
 }
 
@@ -84,6 +96,6 @@ export async function disablePlugin(app: App): Promise<void> {
  * Manual equivalent: toggle `Backlink Full Path` back on in **Settings -> Community plugins**.
  */
 export async function enablePlugin(app: App): Promise<void> {
-  await enableCommunityPlugin({ app, pluginId: PLUGIN_ID });
+  await app.plugins.enablePluginAndSave(PLUGIN_ID);
   new Notice('Plugin on — each backlink carries its folder path again.');
 }

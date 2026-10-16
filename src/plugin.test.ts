@@ -4,8 +4,8 @@ import type {
   PluginManifest
 } from 'obsidian';
 
+import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { Component } from 'obsidian';
-import { castTo } from 'obsidian-dev-utils/object-utils';
 import { App } from 'obsidian-test-mocks/obsidian';
 import {
   beforeEach,
@@ -23,9 +23,7 @@ interface SettingTabsHolder {
   settingTabs__: unknown[];
 }
 
-const STRICT_PROXY_TARGET_SYMBOL = Symbol.for('strictProxyTarget');
-
-// --- Mocks for the plugin's OWN sibling modules (allowed: not obsidian-dev-utils / obsidian-test-mocks) ---
+// --- Mocks for the plugin's OWN sibling modules (allowed: not the @mnaoumov libraries / obsidian-test-mocks) ---
 
 const hoisted = vi.hoisted(() => ({
   backlinkFullPathComponentConstructor: vi.fn(),
@@ -77,15 +75,9 @@ let app: AppOriginal;
 
 async function createLoadedPlugin(): Promise<Plugin> {
   const plugin = new Plugin(app, manifest);
-  // PluginBase.onload is async, and the synchronous mock Component.load() would not await it, so the real async load path is driven directly (as the obsidian-dev-utils reference test does).
+  // PluginBase.onload is async, and the synchronous mock Component.load() would not await it, so the real async load path is driven directly.
   await plugin.onload();
   return plugin;
-}
-
-function seedOnRawTarget(strictProxiedObject: object, key: string, value: unknown): void {
-  const proxyWithTarget = castTo<Partial<Record<symbol, object>>>(strictProxiedObject);
-  const rawTarget = proxyWithTarget[STRICT_PROXY_TARGET_SYMBOL] ?? strictProxiedObject;
-  castTo<Record<string, unknown>>(rawTarget)[key] = value;
 }
 
 describe('Plugin', () => {
@@ -97,10 +89,7 @@ describe('Plugin', () => {
     });
     app = appMock.asOriginalType__();
 
-    // Seed the obsidianDevUtilsState holder on the raw target behind the strict-proxy App so the real getObsidianDevUtilsState can read/write it (the proxy throws on first access to an unassigned property).
-    seedOnRawTarget(app, 'obsidianDevUtilsState', {});
-
-    // Expose the app as the global instance so dev-utils helpers that resolve shared state without an explicit app argument read/write the same seeded holder.
+    // Expose the app as the global instance so library helpers that resolve the app without an explicit argument read this one.
     castTo<AppGlobal>(window).app = app;
   });
 

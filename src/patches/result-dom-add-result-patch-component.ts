@@ -1,11 +1,11 @@
 import type { ResultDom } from '@obsidian-typings/obsidian-public-latest';
 
+import { MonkeyAroundComponent } from '@mnaoumov/obsidian-lib/components/monkey-around-component';
+import { getPrototypeOf } from '@mnaoumov/typescript-lib/object-utils';
 import {
   setTooltip,
   TFile
 } from 'obsidian';
-import { getPrototypeOf } from 'obsidian-dev-utils/object-utils';
-import { MonkeyAroundComponent } from 'obsidian-dev-utils/obsidian/components/monkey-around-component';
 
 import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 
