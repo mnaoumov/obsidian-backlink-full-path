@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 1.7.7
+
+- build(deps): move off obsidian-dev-utils onto the @mnaoumov packages
+- chore(cspell): accept Sidedock from the obsidian-typings workspace declarations
+- docs: mark plugin names as code in docs, demo vault and comments
+- test: merge using the obsidian-typings declarations of Obsidian internals
+
 ## 1.7.6
 
 - test(screenshots): merge setting the desktop capture theme with applyObsidianTheme
