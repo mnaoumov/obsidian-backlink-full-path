@@ -1,6 +1,6 @@
 # Settings
 
-Open **Settings -> Community plugins -> Backlink Full Path** to configure the pane. Each option below lists the setting key stored in the plugin's `data.json`.
+Open **Settings -> Community plugins -> `Backlink Full Path`** to configure the pane. Each option below lists the setting key stored in the plugin's `data.json`.
 
 ## Which path to show
 

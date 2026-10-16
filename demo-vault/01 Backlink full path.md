@@ -43,6 +43,6 @@ caption: Turn the plugin back on
 await require('/demoSetup.ts').enablePlugin(app);
 ```
 
-Manual equivalent: toggle **Backlink Full Path** in **Settings -> Community plugins**.
+Manual equivalent: toggle `Backlink Full Path` in **Settings -> Community plugins**.
 
 Then head to [02 Settings](<./02 Settings.md>) and tweak how the path is rendered - depth, highlighting, extension, ordering, and more.
