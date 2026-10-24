@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 1.7.8
+
+- chore(deps): move to @mnaoumov/obsidian-lib 6
+- docs: shorten the debugging section
+- chore: replace leftover obsidian-dev-utils references with @mnaoumov/obsidian-lib
+- docs(readme): lead the Debugging section with `Advanced Debug Mode`
+- build(deps): float brace-expansion, sharp and fast-uri past their advisories
+- docs: mark plugin names as code
+- chore(github): point questions to Discussions from the new-issue page
+- ci: merge attesting release assets through the toolkit's reusable workflow
+
 ## 1.7.7
 
 - build(deps): move off obsidian-dev-utils onto the @mnaoumov packages

@@ -6,6 +6,6 @@
   "id": "backlink-full-path",
   "isDesktopOnly": false,
   "name": "Backlink Full Path",
-  "version": "1.7.7",
-  "minAppVersion": "1.14.4"
+  "version": "1.7.8",
+  "minAppVersion": "1.14.5"
 }
