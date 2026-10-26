@@ -46,6 +46,15 @@ A copy of the vault ships with every release. You can access it via any of the f
 - **Full paths in the Backlinks pane**, so notes sharing a name are distinguishable — shown side by side with Obsidian's default. [01 Backlink full path](<./demo-vault/01 Backlink full path.md>)
 - **Every setting**, by the key it is stored under. [02 Settings](<./demo-vault/02 Settings.md>)
 
+## Similar plugins
+
+- [`Hierarchical Backlinks`](https://community.obsidian.md/plugins/hierarchical-backlinks) — shows the active note's backlinks as a tree of the folders they sit in, in a view of its own; this plugin keeps Obsidian's Backlinks pane and puts each note's path on its row.
+- [`Context Titles`](https://community.obsidian.md/plugins/context-titles) — adds folder context to duplicate note names in the graph view; this plugin does the same job in the Backlinks pane.
+- [`Unique Tab Labels`](https://community.obsidian.md/plugins/unique-tab-labels) — prefixes tab labels with parent folders so tabs of same-named notes can be told apart; this plugin changes the Backlinks pane, not tabs.
+- [`Tab File Path`](https://community.obsidian.md/plugins/tab-file-path) — shows file paths in tabs; this plugin shows them in the Backlinks pane.
+
+Last searched for similar plugins on 2026-10-26.
+
 ## Installation
 
 The plugin is available in [the official Community Plugins repository](https://community.obsidian.md/plugins/backlink-full-path).
