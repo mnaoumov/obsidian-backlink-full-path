@@ -29,6 +29,7 @@ const SETTLE_IN_MS = 3000;
 const SCENARIO_TIMEOUT_IN_MS = 120_000;
 
 interface ResultDomPrototypeState {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Each scenario records the current method for comparison after plugin toggles.
   addResult?: unknown;
   readonly prototype: Record<string, unknown>;
 }

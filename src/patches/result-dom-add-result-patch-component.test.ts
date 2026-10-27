@@ -21,6 +21,7 @@ import { PluginSettings } from '../plugin-settings.ts';
 import { ResultDomAddResultPatchComponent } from './result-dom-add-result-patch-component.ts';
 
 interface ResultDomPrototype {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests replace the prototype method to exercise different result shapes.
   addResult: (file: TFile, result: ResultDomResult, content: string, shouldShowTitle: boolean) => ResultDomItem;
 }
 
