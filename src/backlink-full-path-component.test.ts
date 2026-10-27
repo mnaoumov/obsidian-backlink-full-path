@@ -27,15 +27,16 @@ import { ResultDomAddResultPatchComponent } from './patches/result-dom-add-resul
 import { PluginSettings } from './plugin-settings.ts';
 
 interface ComponentInternals {
-  getBacklinkComponent: () => Promise<BacklinkComponent | null>;
-  getBacklinkView: () => Promise<BacklinkView | null>;
-  patchBacklinksPane: () => Promise<boolean>;
-  patchLateBacklinks: () => Promise<void>;
-  refreshBacklinkPanels: () => Promise<void>;
-  reloadBacklinksView: () => Promise<void>;
+  readonly getBacklinkComponent: () => Promise<BacklinkComponent | null>;
+  readonly getBacklinkView: () => Promise<BacklinkView | null>;
+  readonly patchBacklinksPane: () => Promise<boolean>;
+  readonly patchLateBacklinks: () => Promise<void>;
+  readonly refreshBacklinkPanels: () => Promise<void>;
+  readonly reloadBacklinksView: () => Promise<void>;
 }
 
 interface CorePlugin {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests toggle the core plugin state between lifecycle events.
   enabled: boolean;
 }
 
@@ -45,16 +46,16 @@ interface PushBacklinkViewParams {
 }
 
 interface TestContext {
-  app: App;
-  backlinkLeaves: WorkspaceLeaf[];
-  component: BacklinkFullPathComponent;
-  getPluginById: ReturnType<typeof vi.fn>;
-  internalPluginsOn: ReturnType<typeof vi.fn>;
-  markdownLeaves: WorkspaceLeaf[];
-  on: ReturnType<typeof vi.fn>;
-  triggerChange: () => void;
-  triggerLayoutChange: () => void;
-  workspaceOn: ReturnType<typeof vi.fn>;
+  readonly app: App;
+  readonly backlinkLeaves: WorkspaceLeaf[];
+  readonly component: BacklinkFullPathComponent;
+  readonly getPluginById: ReturnType<typeof vi.fn>;
+  readonly internalPluginsOn: ReturnType<typeof vi.fn>;
+  readonly markdownLeaves: WorkspaceLeaf[];
+  readonly on: ReturnType<typeof vi.fn>;
+  readonly triggerChange: () => void;
+  readonly triggerLayoutChange: () => void;
+  readonly workspaceOn: ReturnType<typeof vi.fn>;
 }
 
 describe('BacklinkFullPathComponent', () => {

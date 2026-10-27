@@ -85,17 +85,17 @@ import {
  * The slice of Obsidian's backlink pane this storyboard drives.
  */
 interface BacklinkPaneComponent {
-  backlinkDom: BacklinkResultDom;
-  setCollapseAll: (this: void, isCollapsed: boolean) => void;
-  setExtraContext: (this: void, hasExtraContext: boolean) => void;
-  setSortOrder: (this: void, sortOrder: string) => void;
+  readonly backlinkDom: BacklinkResultDom;
+  readonly setCollapseAll: (this: void, isCollapsed: boolean) => void;
+  readonly setExtraContext: (this: void, hasExtraContext: boolean) => void;
+  readonly setSortOrder: (this: void, sortOrder: string) => void;
 }
 
 /**
  * The backlink leaf's view, reduced to the component above.
  */
 interface BacklinkPaneView {
-  backlink: BacklinkPaneComponent;
+  readonly backlink: BacklinkPaneComponent;
 }
 
 /**
@@ -103,28 +103,28 @@ interface BacklinkPaneView {
  * currently lists.
  */
 interface BacklinkResultDom {
-  resultDomLookup: Map<BacklinkResultFile, unknown>;
+  readonly resultDomLookup: Map<BacklinkResultFile, unknown>;
 }
 
 /**
  * A file keyed in the pane's result lookup, reduced to its path.
  */
 interface BacklinkResultFile {
-  path: string;
+  readonly path: string;
 }
 
 /**
  * The settings component's editor entry point.
  */
 interface SettingsEditableComponent {
-  editAndSave: (this: void, settingsEditor: (settings: Record<string, unknown>) => void) => Promise<void>;
+  readonly editAndSave: (this: void, settingsEditor: (settings: Record<string, unknown>) => void) => Promise<void>;
 }
 
 /**
  * The plugin, reduced to the settings surface this storyboard edits.
  */
 interface SettingsEditablePlugin {
-  pluginSettingsComponent: SettingsEditableComponent;
+  readonly pluginSettingsComponent: SettingsEditableComponent;
 }
 
 const PLUGIN_ID = 'backlink-full-path';

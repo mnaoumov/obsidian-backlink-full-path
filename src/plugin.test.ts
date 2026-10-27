@@ -16,11 +16,12 @@ import {
 } from 'vitest';
 
 interface AppGlobal {
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Each test installs its own app instance on the window global.
   app: AppOriginal;
 }
 
 interface SettingTabsHolder {
-  settingTabs__: unknown[];
+  readonly settingTabs__: unknown[];
 }
 
 // --- Mocks for the plugin's OWN sibling modules (allowed: not the @mnaoumov libraries / obsidian-test-mocks) ---
