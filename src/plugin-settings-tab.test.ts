@@ -7,14 +7,8 @@ import { AsyncEvents } from '@mnaoumov/typescript-lib/async-events';
 import { noopAsync } from '@mnaoumov/typescript-lib/function';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
+import { App } from 'obsidian-test-mocks/obsidian';
 import {
-  App,
-  DropdownComponent as DropdownComponentClass,
-  TextComponent as TextComponentClass,
-  ToggleComponent as ToggleComponentClass
-} from 'obsidian-test-mocks/obsidian';
-import {
-  beforeAll,
   describe,
   expect,
   it
@@ -71,15 +65,6 @@ function renderSettings(tab: PluginSettingsTab): void {
     }
   }
 }
-
-beforeAll(() => {
-  // The @mnaoumov/obsidian-lib bind() probes setPlaceholderValue to detect text-based components.
-  for (const prototype of [ToggleComponentClass.prototype, DropdownComponentClass.prototype, TextComponentClass.prototype]) {
-    if (!('setPlaceholderValue' in prototype)) {
-      Object.defineProperty(prototype, 'setPlaceholderValue', { value: undefined });
-    }
-  }
-});
 
 describe('PluginSettingsTab', () => {
   it('should be constructable', async () => {
