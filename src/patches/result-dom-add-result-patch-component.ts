@@ -1,4 +1,5 @@
 import type { ResultDom } from '@obsidian-typings/obsidian-public-latest';
+import type { App } from 'obsidian';
 
 import { MonkeyAroundComponent } from '@mnaoumov/obsidian-lib/components/monkey-around-component';
 import { getPrototypeOf } from '@mnaoumov/typescript-lib/object-utils';
@@ -18,16 +19,19 @@ import type { PluginSettingsComponent } from '../plugin-settings-component.ts';
 const BACKLINK_PANE_CLASS = 'backlink-pane';
 
 interface ResultDomAddResultPatchComponentConstructorParams {
+  readonly app: App;
   readonly pluginSettingsComponent: PluginSettingsComponent;
   readonly resultDom: ResultDom;
 }
 
 export class ResultDomAddResultPatchComponent extends MonkeyAroundComponent {
+  private readonly app: App;
   private readonly pluginSettingsComponent: PluginSettingsComponent;
   private readonly resultDom: ResultDom;
 
   public constructor(params: ResultDomAddResultPatchComponentConstructorParams) {
     super();
+    this.app = params.app;
     this.resultDom = params.resultDom;
     this.pluginSettingsComponent = params.pluginSettingsComponent;
   }
@@ -56,9 +60,25 @@ export class ResultDomAddResultPatchComponent extends MonkeyAroundComponent {
   }
 
   private generateBacklinkTitle(file: TFile): HTMLDivElement {
-    const fileNamePart = this.pluginSettingsComponent.settings.shouldIncludeExtension ? file.name : file.basename;
+    let fileNamePart = this.pluginSettingsComponent.settings.shouldIncludeExtension ? file.name : file.basename;
 
     let parentPathParts = file.path.split('/').slice(0, -1);
+
+    /*
+     * In a folder-note vault every note is named `index` (or `README`), so the file name says nothing. The title
+     * property, when the note has one, names it best; otherwise the note's own folder does, and that folder then
+     * leaves the parent path so it is not shown twice.
+     */
+    const title = this.getTitle(file);
+    if (title !== null) {
+      fileNamePart = title;
+    } else if (this.pluginSettingsComponent.settings.folderNoteFileNames.includes(file.basename)) {
+      const folderName = parentPathParts.at(-1);
+      if (folderName !== undefined) {
+        fileNamePart = folderName;
+        parentPathParts = parentPathParts.slice(0, -1);
+      }
+    }
 
     for (let length = parentPathParts.length; length >= 1; length--) {
       const rootPath = parentPathParts.slice(0, length).join('/');
@@ -118,6 +138,22 @@ export class ResultDomAddResultPatchComponent extends MonkeyAroundComponent {
     }
 
     return container;
+  }
+
+  private getTitle(file: TFile): null | string {
+    const titlePropertyName = this.pluginSettingsComponent.settings.titlePropertyName;
+    if (!titlePropertyName) {
+      return null;
+    }
+
+    const value: unknown = this.app.metadataCache.getFileCache(file)?.frontmatter?.[titlePropertyName];
+    const title: unknown = Array.isArray(value) ? value[0] : value;
+    if (typeof title !== 'string') {
+      return null;
+    }
+
+    const trimmedTitle = title.trim();
+    return trimmedTitle || null;
   }
 }
 

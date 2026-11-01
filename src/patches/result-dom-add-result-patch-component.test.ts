@@ -3,7 +3,12 @@ import type {
   ResultDomItem,
   ResultDomResult
 } from '@obsidian-typings/obsidian-public-latest';
-import type { TFile } from 'obsidian';
+import type {
+  App,
+  CachedMetadata,
+  MetadataCache,
+  TFile
+} from 'obsidian';
 
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { strictProxy } from '@mnaoumov/typescript-test-toolkit/strict-proxy';
@@ -30,8 +35,19 @@ describe('ResultDomAddResultPatchComponent', () => {
   let pluginSettingsComponent: PluginSettingsComponent;
   let resultDomPrototype: ResultDomPrototype;
   let resultDom: ResultDom;
+  let frontmatterByPath: Map<string, Record<string, unknown>>;
+  let app: App;
 
   beforeEach(() => {
+    frontmatterByPath = new Map();
+    app = strictProxy<App>({
+      metadataCache: strictProxy<MetadataCache>({
+        getFileCache: (file: TFile): CachedMetadata | null => {
+          const frontmatter = frontmatterByPath.get(file.path);
+          return frontmatter ? { frontmatter } : null;
+        }
+      })
+    });
     settings = new PluginSettings();
     pluginSettingsComponent = strictProxy<PluginSettingsComponent>({
       settings
@@ -201,6 +217,87 @@ describe('ResultDomAddResultPatchComponent', () => {
     });
   });
 
+  describe('folder-note labels', () => {
+    it('should keep the file name when the title property is not configured', () => {
+      frontmatterByPath.set('a/index.md', { title: 'Alpha' });
+      const container = generateContainer('a/index.md');
+      expect(getPart(container, 'file-name')?.textContent).toBe('index.md');
+    });
+
+    it('should show the title property value instead of the file name', () => {
+      settings.titlePropertyName = 'title';
+      frontmatterByPath.set('projects/alpha/index.md', { title: 'Alpha project' });
+      const container = generateContainer('projects/alpha/index.md');
+      expect(getPart(container, 'file-name')?.textContent).toBe('Alpha project');
+      expect(getPart(container, 'parent-path')?.textContent).toBe('projects/alpha/');
+    });
+
+    it('should use the first item of a list title property', () => {
+      settings.titlePropertyName = 'aliases';
+      frontmatterByPath.set('a/index.md', { aliases: ['First', 'Second'] });
+      const container = generateContainer('a/index.md');
+      expect(getPart(container, 'file-name')?.textContent).toBe('First');
+    });
+
+    it.each([
+      ['missing frontmatter', undefined],
+      ['a missing property', {}],
+      ['a non-string value', { title: 42 }],
+      ['an empty list', { title: [] }],
+      ['a blank string', { title: '  ' }]
+    ])('should keep the file name for %s', (_caseName, frontmatter) => {
+      settings.titlePropertyName = 'title';
+      if (frontmatter) {
+        frontmatterByPath.set('a/note.md', frontmatter);
+      }
+      const container = generateContainer('a/note.md');
+      expect(getPart(container, 'file-name')?.textContent).toBe('note.md');
+    });
+
+    it('should label a folder note by its folder and drop that folder from the parent path', () => {
+      settings.folderNoteFileNames = ['index'];
+      const container = generateContainer('projects/alpha/index.md');
+      expect(getPart(container, 'file-name')?.textContent).toBe('alpha');
+      expect(getPart(container, 'parent-path')?.textContent).toBe('projects/');
+    });
+
+    it('should show no parent path for a folder note in a top-level folder', () => {
+      settings.folderNoteFileNames = ['index'];
+      const container = generateContainer('alpha/index.md');
+      expect(getPart(container, 'file-name')?.textContent).toBe('alpha');
+      expect(getPart(container, 'parent-path')).toBeNull();
+    });
+
+    it('should keep the file name of a folder note at the vault root', () => {
+      settings.folderNoteFileNames = ['index'];
+      const container = generateContainer('index.md');
+      expect(getPart(container, 'file-name')?.textContent).toBe('index.md');
+    });
+
+    it('should leave notes with other names untouched', () => {
+      settings.folderNoteFileNames = ['index'];
+      const container = generateContainer('projects/alpha/notes.md');
+      expect(getPart(container, 'file-name')?.textContent).toBe('notes.md');
+      expect(getPart(container, 'parent-path')?.textContent).toBe('projects/alpha/');
+    });
+
+    it('should prefer the title property over the folder name', () => {
+      settings.titlePropertyName = 'title';
+      settings.folderNoteFileNames = ['index'];
+      frontmatterByPath.set('projects/alpha/index.md', { title: 'Alpha project' });
+      const container = generateContainer('projects/alpha/index.md');
+      expect(getPart(container, 'file-name')?.textContent).toBe('Alpha project');
+      expect(getPart(container, 'parent-path')?.textContent).toBe('projects/alpha/');
+    });
+
+    it('should fall back to the folder name when the folder note has no title', () => {
+      settings.titlePropertyName = 'title';
+      settings.folderNoteFileNames = ['index'];
+      const container = generateContainer('projects/alpha/index.md');
+      expect(getPart(container, 'file-name')?.textContent).toBe('alpha');
+    });
+  });
+
   function addResult(targetResultDom: ResultDom, filePath: string): ResultDomItem {
     return resultDomPrototype.addResult.call(targetResultDom, createMockFile(filePath), strictProxy<ResultDomResult>({}), 'content', true);
   }
@@ -212,6 +309,7 @@ describe('ResultDomAddResultPatchComponent', () => {
 
   function createComponent(): ResultDomAddResultPatchComponent {
     return new ResultDomAddResultPatchComponent({
+      app,
       pluginSettingsComponent,
       resultDom
     });

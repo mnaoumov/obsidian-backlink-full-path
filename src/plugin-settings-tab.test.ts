@@ -83,7 +83,9 @@ describe('PluginSettingsTab', () => {
       'Highlight file name',
       'Reverse path parts',
       'Display parent path on separate line',
-      'Root paths'
+      'Root paths',
+      'Title property',
+      'Folder note file names'
     ]);
   });
 });

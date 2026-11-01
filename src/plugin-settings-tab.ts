@@ -112,6 +112,42 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             this.bind({ propertyName: 'rootPaths', valueComponent: multipleText });
           });
         }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText('The note property whose value replaces the file name in backlinks, e.g. ');
+          appendCodeBlock(f, 'title');
+          f.appendText('.');
+          f.createEl('br');
+          f.appendText('Notes without the property keep their file name. Leave empty to turn it off.');
+        }),
+        name: 'Title property',
+        render: (setting) => {
+          setting.addText((text) => {
+            this.bind({ propertyName: 'titlePropertyName', valueComponent: text });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText('File names of folder notes, e.g. ');
+          appendCodeBlock(f, 'index');
+          f.appendText('.');
+          f.createEl('br');
+          f.appendText('A backlink from such a note shows its folder name instead: ');
+          appendCodeBlock(f, 'projects/alpha');
+          f.appendText(' instead of ');
+          appendCodeBlock(f, 'projects/alpha/index.md');
+          f.appendText('.');
+          f.createEl('br');
+          f.appendText('The title property, when set and present, takes precedence.');
+        }),
+        name: 'Folder note file names',
+        render: (setting) => {
+          setting.addMultipleText((multipleText) => {
+            this.bind({ propertyName: 'folderNoteFileNames', valueComponent: multipleText });
+          });
+        }
       })
     ];
   }

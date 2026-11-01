@@ -7,6 +7,16 @@ import {
 import { PluginSettings } from './plugin-settings.ts';
 
 describe('PluginSettings', () => {
+  it('should have correct default folderNoteFileNames', () => {
+    const settings = new PluginSettings();
+    expect(settings.folderNoteFileNames).toEqual([]);
+  });
+
+  it('should have correct default titlePropertyName', () => {
+    const settings = new PluginSettings();
+    expect(settings.titlePropertyName).toBe('');
+  });
+
   it('should have correct default pathDepth', () => {
     const settings = new PluginSettings();
     expect(settings.pathDepth).toBe(0);
