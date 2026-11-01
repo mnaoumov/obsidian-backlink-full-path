@@ -13,6 +13,13 @@ Open **Settings -> Community plugins -> `Backlink Full Path`** to configure the 
 - `shouldShowEllipsisForSkippedPathParts`
   - show an ellipsis where parts were trimmed by `pathDepth` or a root.
 
+## Which name to show
+
+- `titlePropertyName`
+  - a note property (such as `title`) whose value replaces the file name; notes without it keep their file name. Empty turns it off.
+- `folderNoteFileNames`
+  - file names of folder notes (such as `index` or `README`). In a folder-note vault every backlink would otherwise read `index`; a listed note is shown by its folder's name instead, and that folder leaves the parent path. The title property wins when a note has one.
+
 ## How it looks
 
 - `shouldHighlightFileName`

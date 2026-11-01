@@ -124,6 +124,7 @@ export class BacklinkFullPathComponent extends LayoutReadyComponent {
     this.isBacklinksPanePatched = true;
     this.addChild(
       new ResultDomAddResultPatchComponent({
+        app: this.app,
         pluginSettingsComponent: this.pluginSettingsComponent,
         resultDom: backlinkComponent.backlinkDom
       })

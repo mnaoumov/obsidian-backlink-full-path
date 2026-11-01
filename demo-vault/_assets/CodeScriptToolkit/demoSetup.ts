@@ -9,6 +9,7 @@ const PLUGIN_ID = 'backlink-full-path';
 const SHARED_TOPIC_PATH = 'Materials/01 Backlink full path/Shared topic.md';
 
 interface DemoSettingsPatch {
+  folderNoteFileNames?: string[];
   pathDepth?: number;
   rootPaths?: string[];
   shouldDisplayParentPathOnSeparateLine?: boolean;
@@ -16,6 +17,7 @@ interface DemoSettingsPatch {
   shouldIncludeExtension?: boolean;
   shouldReversePathParts?: boolean;
   shouldShowEllipsisForSkippedPathParts?: boolean;
+  titlePropertyName?: string;
 }
 
 interface PluginWithSettingsComponent {
@@ -69,13 +71,15 @@ export async function changeSettings(app: App, patch: DemoSettingsPatch): Promis
  */
 export async function restoreDefaults(app: App): Promise<void> {
   await changeSettings(app, {
+    folderNoteFileNames: [],
     pathDepth: 0,
     rootPaths: [],
     shouldDisplayParentPathOnSeparateLine: false,
     shouldHighlightFileName: true,
     shouldIncludeExtension: true,
     shouldReversePathParts: false,
-    shouldShowEllipsisForSkippedPathParts: true
+    shouldShowEllipsisForSkippedPathParts: true,
+    titlePropertyName: ''
   });
 }
 

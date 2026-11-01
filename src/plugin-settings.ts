@@ -1,4 +1,6 @@
 export class PluginSettings {
+  public folderNoteFileNames: string[] = [];
+
   public pathDepth = 0;
 
   public rootPaths: string[] = [];
@@ -12,4 +14,6 @@ export class PluginSettings {
   public shouldReversePathParts = false;
 
   public shouldShowEllipsisForSkippedPathParts = true;
+
+  public titlePropertyName = '';
 }
