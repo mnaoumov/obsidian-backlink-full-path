@@ -84,11 +84,11 @@ describe('BacklinkFullPathComponent', () => {
 
     it('should not patch the pane when the backlinks core plugin is not found', async () => {
       context.getPluginById.mockReturnValue(undefined);
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
+      const didPatchBacklinksPaneSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
 
       await triggerLayoutReady();
 
-      expect(patchSpy).not.toHaveBeenCalled();
+      expect(didPatchBacklinksPaneSpy).not.toHaveBeenCalled();
     });
 
     it('should subscribe to internal plugin changes when the core plugin is found', async () => {
@@ -103,60 +103,60 @@ describe('BacklinkFullPathComponent', () => {
     it('should patch the pane when the core plugin becomes enabled', async () => {
       const corePlugin = createCorePlugin(false);
       context.getPluginById.mockReturnValue(corePlugin);
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
+      const didPatchBacklinksPaneSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
 
       await triggerLayoutReady();
       corePlugin.enabled = true;
       context.triggerChange();
 
-      expect(patchSpy).toHaveBeenCalledOnce();
+      expect(didPatchBacklinksPaneSpy).toHaveBeenCalledOnce();
     });
 
     it('should patch the pane once per enable, not on every change', async () => {
       const corePlugin = createCorePlugin(false);
       context.getPluginById.mockReturnValue(corePlugin);
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
+      const didPatchBacklinksPaneSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
 
       await triggerLayoutReady();
       corePlugin.enabled = true;
       context.triggerChange();
       context.triggerChange();
 
-      expect(patchSpy).toHaveBeenCalledOnce();
+      expect(didPatchBacklinksPaneSpy).toHaveBeenCalledOnce();
     });
 
     it('should not patch the pane when the core plugin becomes disabled', async () => {
       const corePlugin = createCorePlugin(true);
       context.getPluginById.mockReturnValue(corePlugin);
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
+      const didPatchBacklinksPaneSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
       vi.spyOn(internals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
 
       await triggerLayoutReady();
-      patchSpy.mockClear();
+      didPatchBacklinksPaneSpy.mockClear();
       corePlugin.enabled = false;
       context.triggerChange();
 
-      expect(patchSpy).not.toHaveBeenCalled();
+      expect(didPatchBacklinksPaneSpy).not.toHaveBeenCalled();
     });
 
     it('should patch the pane and refresh panels when the plugin is enabled', async () => {
       context.getPluginById.mockReturnValue(createCorePlugin(true));
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
+      const didPatchBacklinksPaneSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
       const refreshSpy = vi.spyOn(internals(context.component), 'refreshBacklinkPanels').mockResolvedValue(undefined);
 
       await triggerLayoutReady();
 
-      expect(patchSpy).toHaveBeenCalled();
+      expect(didPatchBacklinksPaneSpy).toHaveBeenCalled();
       expect(refreshSpy).toHaveBeenCalled();
     });
 
     it('should not patch the pane when the plugin is disabled', async () => {
       context.getPluginById.mockReturnValue(createCorePlugin(false));
-      const patchSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
+      const didPatchBacklinksPaneSpy = vi.spyOn(internals(context.component), 'patchBacklinksPane').mockResolvedValue(false);
 
       await triggerLayoutReady();
 
-      expect(patchSpy).not.toHaveBeenCalled();
+      expect(didPatchBacklinksPaneSpy).not.toHaveBeenCalled();
     });
 
     it('should register an unload callback that refreshes panels', async () => {
@@ -358,7 +358,7 @@ describe('BacklinkFullPathComponent', () => {
     });
 
     it('should recompute when the backlink view has a file', async () => {
-      const file = createMockFile('note.md');
+      const file = createNoteFile();
       const recomputeBacklink = vi.fn<(backlinkFile: null | TFile) => void>();
       pushBacklinkView({ file, recomputeBacklink });
 
@@ -386,7 +386,7 @@ describe('BacklinkFullPathComponent', () => {
     });
 
     it('should recompute backlinks for MarkdownView leaves with backlinks', async () => {
-      const file = createMockFile('note.md');
+      const file = createNoteFile();
       const recomputeBacklink = vi.fn();
       context.markdownLeaves.push(createMarkdownLeaf({ file, recomputeBacklink }));
 
@@ -437,8 +437,8 @@ function createMarkdownLeaf(backlinks: unknown): WorkspaceLeaf {
   });
 }
 
-function createMockFile(path: string): TFile {
-  return strictProxy<TFile>({ path });
+function createNoteFile(): TFile {
+  return strictProxy<TFile>({ path: 'note.md' });
 }
 
 function createTestContext(): TestContext {

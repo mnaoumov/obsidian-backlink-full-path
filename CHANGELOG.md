@@ -7,8 +7,8 @@
 - docs: add issue-filing instructions for AI agents
 - chore(github): give the bug form the field ids bug-report links prefill
 - build(deps): override re2js to ^2.9.1 for GHSA-gg6h-894w-4m9c
-- build(deps): bump typescript-dev-toolkit to ^5.2.0
-- build(deps): bump obsidian-dev-toolkit to ^7.1.1 and typescript-dev-toolkit to ^5.1.0
+- build(deps): bump `typescript-dev-toolkit` to ^5.2.0
+- build(deps): bump `obsidian-dev-toolkit` to ^7.1.1 and `typescript-dev-toolkit` to ^5.1.0
 - chore(deps): patch vulnerable development dependencies
 - chore: adopt readonly interface members
 - test: drop obsolete text-component probe patches
@@ -19,7 +19,7 @@
 
 - chore(deps): move to @mnaoumov/obsidian-lib 6
 - docs: shorten the debugging section
-- chore: replace leftover obsidian-dev-utils references with @mnaoumov/obsidian-lib
+- chore: replace leftover `obsidian-dev-utils` references with @mnaoumov/obsidian-lib
 - docs(readme): lead the Debugging section with `Advanced Debug Mode`
 - build(deps): float brace-expansion, sharp and fast-uri past their advisories
 - docs: mark plugin names as code
@@ -28,10 +28,10 @@
 
 ## 1.7.7
 
-- build(deps): move off obsidian-dev-utils onto the @mnaoumov packages
-- chore(cspell): accept Sidedock from the obsidian-typings workspace declarations
+- build(deps): move off `obsidian-dev-utils` onto the @mnaoumov packages
+- chore(`cspell`): accept Sidedock from the `obsidian-typings` workspace declarations
 - docs: mark plugin names as code in docs, demo vault and comments
-- test: merge using the obsidian-typings declarations of Obsidian internals
+- test: merge using the `obsidian-typings` declarations of Obsidian internals
 
 ## 1.7.6
 
@@ -42,8 +42,8 @@
 - test(screenshots): merge the desktop post-stamp Backlinks wait
 - test(screenshots): merge the deterministic mobile Backlinks order
 - test(screenshots): merge the deterministic desktop Backlinks order
-- chore(deps): merge floating obsidian-integration-testing to ^17.0.1 and obsidian-dev-utils to ^107.0.0
-- chore(deps): merge floating obsidian-test-mocks to ^7.0.0
+- chore(deps): merge floating `obsidian-integration-testing` to ^17.0.1 and `obsidian-dev-utils` to ^107.0.0
+- chore(deps): merge floating `obsidian-test-mocks` to ^7.0.0
 - fix(backlinks): merge keeping the full-path caption out of Search and query blocks
 - fix(backlinks): merge patching the pane when it opens after load
 - fix(backlinks): merge installing the pane patch once per session
@@ -52,7 +52,7 @@
 - refactor(backlinks): drop the shared-prototype onUserEnable patch
 - test(screenshots): name the popout as the settings-modal cause
 - fix(deps): float devalue to 5.9.4, clearing GHSA-9rgm-9g3h-6x36
-- build(markdownlint): forbid hard-wrapped markdown paragraphs
+- build(`markdownlint`): forbid hard-wrapped markdown paragraphs
 - chore(deps): drop the dead type-fest override
 - chore(deps): drop the dead markdown-it override
 - chore(deps): drop the dead js-yaml override
@@ -60,9 +60,9 @@
 - docs: replace the private rule-id citations with what they assert
 - docs: name the library and the sibling plugins so a reader can resolve them
 - docs: replace the private tracker references with what they pointed at
-- chore(deps): move to obsidian-dev-utils 103
+- chore(deps): move to `obsidian-dev-utils` 103
 - test: bring the capture suite's wait ceilings under the transport's per-eval cap
-- chore: adopt the npm run gate branch gate
+- chore: adopt the `npm run gate` branch gate
 - docs: say where the debug command is run
 - test: bring the in-closure wait ceiling under the transport's per-eval cap
 - docs: name the unversioned demo-vault asset and the folder it unzips into
@@ -73,20 +73,20 @@
 ## 1.7.5
 
 - chore(deps): sweep caret-ranged dependencies to latest
-- fix(deps): move to obsidian-integration-testing 11 and drop the brace-expansion override
+- fix(deps): move to `obsidian-integration-testing` 11 and drop the brace-expansion override
 - test(settings): retract the "settings modal cannot be opened" note
 - docs: point plugin-directory links at community.obsidian.md
 
 ## 1.7.4
 
 - docs(demo-vault): unwrap the notes so Obsidian stops rendering a break per line
-- docs(readme): render the same in Obsidian's plugin page as on GitHub
+- docs(readme): render the same in Obsidian's plugin page as on `GitHub`
 - chore: update libs
-- chore: update obsidian-dev-utils to 94.6.1
-- chore: update obsidian-dev-utils to 94.6.0
+- chore: update `obsidian-dev-utils` to 94.6.1
+- chore: update `obsidian-dev-utils` to 94.6.0
 - fix: override deepmerge-ts to clear GHSA-ggr8-5vv4-36mx
 - test: gate the demo vault by clicking every code button
-- chore: teach cspell the advisory wording
+- chore: teach `cspell` the advisory wording
 - chore: update libs
 - docs(demo-vault): give the demo vault its code buttons
 - docs: show the screenshots in the README
@@ -99,22 +99,22 @@
 ## 1.7.3
 
 - docs: make the demo vault the documentation, in the standard layout
-- feat(demo-vault): migrate to obsidian-dev-utils 93.3.1 and adopt the authoring convention
+- feat(demo-vault): migrate to `obsidian-dev-utils` 93.3.1 and adopt the authoring convention
 
 ## 1.7.2
 
-- chore: update libs and adopt obsidian-integration-testing 10
+- chore: update libs and adopt `obsidian-integration-testing` 10
 
 ## 1.7.1
 
 - chore: update libs
 - chore: update libs
-- chore(vitest): adopt the shared Obsidian plugin vitest configuration
+- chore(`vitest`): adopt the shared Obsidian plugin `vitest` configuration
 
 ## 1.7.0
 
 - refactor(settings): move the settings tab onto the declarative settings API
-- chore: update libs and clear the npm audit
+- chore: update libs and clear the `npm` audit
 - docs: fix the demo vault download instructions
 
 ## 1.6.12
@@ -135,7 +135,7 @@
 ## 1.6.9
 
 - docs: standardize demo-vault README
-- docs: drop per-plugin demo-vault setup notes (bootstrap covered by the obsidian-dev-utils harness)
+- docs: drop per-plugin demo-vault setup notes (bootstrap covered by the `obsidian-dev-utils` harness)
 - docs: unnumber demo-vault setup notes
 - docs(demo-vault): number `Backlink Full Path` demo vault example notes
 - docs(demo-vault): create the `Backlink Full Path` demo vault
@@ -146,7 +146,7 @@
 ## 1.6.8
 
 - chore: update libs
-- chore: update obsidian-dev-utils to 85.0.0
+- chore: update `obsidian-dev-utils` to 85.0.0
 - build: lock typescript to 6.0.3
 - test: wire integration-testing vitest-setup into integration projects
 - chore: update libs
@@ -201,7 +201,7 @@
 
 - chore: update libs
 - chore: lint
-- chore: enable markdownlint
+- chore: enable `markdownlint`
 
 ## 1.5.16
 

@@ -1,5 +1,4 @@
 import type { BacklinkView } from '@obsidian-typings/obsidian-public-latest';
-import type { App } from 'obsidian';
 
 import { evalInObsidian } from 'obsidian-integration-testing';
 import { getTemporaryVault } from 'obsidian-integration-testing/vitest-global-setup-plugin';
@@ -62,8 +61,8 @@ async function runStep(step: Step): Promise<StepResult> {
         throw new Error('The core Backlinks plugin is missing.');
       }
 
-      async function getBacklinkView(obsidianApp: App): Promise<BacklinkView | null> {
-        const backlinkLeaf = obsidianApp.workspace.getLeavesOfType('backlink')[0];
+      async function getBacklinkView(): Promise<BacklinkView | null> {
+        const backlinkLeaf = app.workspace.getLeavesOfType('backlink')[0];
         if (!backlinkLeaf) {
           return null;
         }
@@ -106,7 +105,7 @@ async function runStep(step: Step): Promise<StepResult> {
           await app.workspace.getLeaf(false).openFile(targetFile);
           corePlugin.instance.openBacklinksForActiveFile(true);
           await sleep(settleInMs);
-          const backlinkView = await getBacklinkView(app);
+          const backlinkView = await getBacklinkView();
           renderedCaptions = [...backlinkView?.backlink.backlinkDom.resultDomLookup.values() ?? []].map((item) => item.el.querySelector('.tree-item-inner')?.textContent ?? '');
           break;
         }
@@ -121,7 +120,7 @@ async function runStep(step: Step): Promise<StepResult> {
           await app.workspace.getLeaf(false).openFile(targetFile);
           corePlugin.instance.openBacklinksForActiveFile(true);
           await sleep(settleInMs);
-          const backlinkView = await getBacklinkView(app);
+          const backlinkView = await getBacklinkView();
           if (!backlinkView) {
             throw new Error('The backlinks pane did not open.');
           }
