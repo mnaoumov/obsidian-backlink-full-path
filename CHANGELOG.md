@@ -374,9 +374,9 @@ This release has 1 other change.
 
 ## 1.0.0
 
-This release has 2 other changes.
+The first release.
 
-### Other changes
+### New
 
-- Reload backlinks on plugin enable/disable
-- Patch backlinks dom
+- The Backlinks pane shows each backlink's full path instead of the note name alone, so notes that share a name are told apart
+- The pane refreshes when the plugin is turned on or off, so the full paths appear and disappear without reopening it
