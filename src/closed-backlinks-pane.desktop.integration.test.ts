@@ -59,8 +59,8 @@ async function runStep(step: Step): Promise<readonly string[]> {
       }
       const backlinkPluginInstance = corePlugin.instance;
 
-      function getTargetLeaf(): undefined | WorkspaceLeaf {
-        return app.workspace.getLeavesOfType('markdown').find((leaf) => (leaf.view as MarkdownView).file?.path === targetPath);
+      function getTargetLeaf(): null | WorkspaceLeaf {
+        return app.workspace.getLeavesOfType('markdown').find((leaf) => (leaf.view as MarkdownView).file?.path === targetPath) ?? null;
       }
 
       function readCaptions(resultDomLookup: Map<TFile, ResultDomItem> | undefined): string[] {
