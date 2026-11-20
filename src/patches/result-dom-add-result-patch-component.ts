@@ -109,6 +109,7 @@ export class ResultDomAddResultPatchComponent extends MonkeyAroundComponent {
       cls: ['backlink-full-path', 'backlink-control']
     });
     container.dataset['shouldHighlightFileName'] = this.pluginSettingsComponent.settings.shouldHighlightFileName.toString();
+    container.dataset['shouldEnlargeHighlightedFileName'] = this.pluginSettingsComponent.settings.shouldEnlargeHighlightedFileName.toString();
     container.dataset['shouldDisplayParentPathOnSeparateLine'] = this.pluginSettingsComponent.settings.shouldDisplayParentPathOnSeparateLine.toString();
     container.createSpan({
       cls: 'full-path',

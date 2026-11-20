@@ -81,6 +81,7 @@ describe('PluginSettingsTab', () => {
       'Path depth',
       'Show ellipsis for skipped path parts',
       'Highlight file name',
+      'Enlarge highlighted file name',
       'Reverse path parts',
       'Display parent path on separate line',
       'Root paths',

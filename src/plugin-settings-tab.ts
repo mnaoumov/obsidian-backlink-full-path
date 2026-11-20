@@ -79,6 +79,23 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       }),
       this.settingEx({
         desc: createFragment((f) => {
+          f.appendText('Whether the highlighted file name also uses a larger font.');
+          f.createEl('br');
+          f.appendText('If disabled, the file name is only bold, so each backlink takes no extra vertical space.');
+          f.createEl('br');
+          f.appendText('Applies only when ');
+          appendCodeBlock(f, 'Highlight file name');
+          f.appendText(' is enabled.');
+        }),
+        name: 'Enlarge highlighted file name',
+        render: (setting) => {
+          setting.addToggle((toggle) => {
+            this.bind({ propertyName: 'shouldEnlargeHighlightedFileName', valueComponent: toggle });
+          });
+        }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
           f.appendText('Whether to reverse the path parts.');
           f.createEl('br');
           f.appendText('If enabled, shows paths in reverse order: ');
