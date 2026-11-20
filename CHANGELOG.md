@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 1.10.0
+
+This release has 1 new feature and 2 documentation changes. 1 maintenance commit (tests, build, CI, refactoring, dependencies) is not listed.
+
+### New
+
+- \[FR\] Custom "highlight" e.g. just bold (#9): the new `Enlarge highlighted file name` setting (on by default) controls the larger font; turned off, the highlighted file name is bold only and takes no extra vertical space
+
+### Documentation
+
+- **demo-vault:** demonstrate the Enlarge highlighted file name setting
+- **changelog:** regroup the published release notes for readers
+
 ## 1.9.0
 
 This release has 1 new feature and 2 documentation changes. 3 maintenance commits (tests, build, CI, refactoring, dependencies) are not listed.
