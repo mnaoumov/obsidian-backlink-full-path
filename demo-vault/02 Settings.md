@@ -24,6 +24,8 @@ Open **Settings -> Community plugins -> `Backlink Full Path`** to configure the 
 
 - `shouldHighlightFileName`
   - visually emphasize the file name within the full path.
+- `shouldEnlargeHighlightedFileName`
+  - show the highlighted file name in a larger font; turned off, it is bold only and takes no extra vertical space.
 - `shouldIncludeExtension`
   - keep the `.md` (or other) extension in the shown name.
 - `shouldDisplayParentPathOnSeparateLine`
@@ -77,6 +79,15 @@ await require('/demoSetup.ts').changeSettings(app, { shouldReversePathParts: tru
 ```
 
 Manual equivalent: turn on **Should reverse path parts**.
+
+```code-button
+---
+caption: Highlight the file name in bold only, at its normal size
+---
+await require('/demoSetup.ts').changeSettings(app, { shouldEnlargeHighlightedFileName: false });
+```
+
+Manual equivalent: turn off **Enlarge highlighted file name**.
 
 ```code-button
 ---
