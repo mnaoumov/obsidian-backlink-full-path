@@ -7,6 +7,8 @@ export class PluginSettings {
 
   public shouldDisplayParentPathOnSeparateLine = false;
 
+  public shouldEnlargeHighlightedFileName = true;
+
   public shouldHighlightFileName = true;
 
   public shouldIncludeExtension = true;

@@ -32,6 +32,11 @@ describe('PluginSettings', () => {
     expect(settings.shouldDisplayParentPathOnSeparateLine).toBe(false);
   });
 
+  it('should have correct default shouldEnlargeHighlightedFileName', () => {
+    const settings = new PluginSettings();
+    expect(settings.shouldEnlargeHighlightedFileName).toBe(true);
+  });
+
   it('should have correct default shouldHighlightFileName', () => {
     const settings = new PluginSettings();
     expect(settings.shouldHighlightFileName).toBe(true);

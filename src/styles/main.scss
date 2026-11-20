@@ -5,8 +5,11 @@
     }
 
     &[data-should-highlight-file-name=true]::part(file-name) {
-      font-size: var(--font-ui-large);
       font-weight: bold;
+    }
+
+    &[data-should-highlight-file-name=true][data-should-enlarge-highlighted-file-name=true]::part(file-name) {
+      font-size: var(--font-ui-large);
     }
 
     &[data-should-display-parent-path-on-separate-line=true]::part(parent-path) {

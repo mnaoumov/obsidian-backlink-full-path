@@ -190,6 +190,13 @@ describe('ResultDomAddResultPatchComponent', () => {
       expect(container.dataset['shouldDisplayParentPathOnSeparateLine']).toBe('false');
     });
 
+    it('should set the dataset attribute for enlarging the highlighted file name', () => {
+      settings.shouldEnlargeHighlightedFileName = false;
+      expect(generateContainer('note.md').dataset['shouldEnlargeHighlightedFileName']).toBe('false');
+      settings.shouldEnlargeHighlightedFileName = true;
+      expect(generateContainer('note.md').dataset['shouldEnlargeHighlightedFileName']).toBe('true');
+    });
+
     it('should include a full-path span with the file path', () => {
       const container = generateContainer('folder/note.md');
       expect(container.querySelector('.full-path')?.textContent).toBe('folder/note.md');
